@@ -9,6 +9,7 @@ Repositorio base para diseñar e implementar un sistema de inteligencia artifici
 - `docs/vision.md`: visión de Luna (personalidad, relación, laboratorio mental).
 - `docs/plan.md`: objetivo, arquitectura propuesta, fases y decisiones.
 - `docs/temperamento/`: escenarios que definen su temperamento.
+- `docs/investigacion/`: línea neurosimbólica y de conciencia.
 - `data/`: datos pequeños de ejemplo (los grandes no se suben al repo).
 
 ## Uso
