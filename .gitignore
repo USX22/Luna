@@ -6,3 +6,4 @@ data/raw/
 *.ckpt
 *.pt
 .env
+results/

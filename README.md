@@ -10,6 +10,7 @@ Repositorio base para diseñar e implementar un sistema de inteligencia artifici
 - `docs/plan.md`: objetivo, arquitectura propuesta, fases y decisiones.
 - `docs/temperamento/`: escenarios que definen su temperamento.
 - `docs/investigacion/`: línea neurosimbólica y de conciencia.
+- `experiments/`: experimentos de investigación (resultados en `results/`, no se suben).
 - `data/`: datos pequeños de ejemplo (los grandes no se suben al repo).
 
 ## Uso
@@ -19,4 +20,9 @@ Repositorio base para diseñar e implementar un sistema de inteligencia artifici
 
 ## Estado
 
-Fase 0: estructura lista. Ver `docs/plan.md`.
+Experimento E1 listo para correr en local con Ollama:
+
+    ollama pull qwen2.5:3b
+    python experiments/e1_abstraction.py --model qwen2.5:3b --n 10
+
+Ver `docs/plan.md` y `docs/investigacion/neurosimbolica.md`.

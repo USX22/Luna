@@ -104,11 +104,17 @@ Principios:
   simbólica, el espacio de trabajo y el aprendizaje de abstracciones.
 - **2026-11-03**: La identidad reside en el estado persistente, no en el modelo base.
 
-## Preguntas abiertas (bloquean la Fase 1)
+- **2026-11-03**: **Hardware**: laptop con RTX 4050 (6 GB VRAM) y 32 GB RAM, más
+  acceso frecuente a un equipo con RTX 5060 Ti. Backend: **Ollama** (ya instalado).
+  Para la línea B (mirar dentro del modelo) se usará PyTorch con `transformers`, porque
+  Ollama no expone las activaciones.
+- **2026-11-03**: **La investigación va primero.** Antes del núcleo conversacional se
+  hace el experimento E1 (`docs/investigacion/neurosimbolica.md`), que mide si la
+  abstracción simbólica explícita aporta algo frente al modelo de lenguaje solo. Su
+  arnés (cliente de Ollama, tareas y ejecución de programas) se reutilizará en Luna.
 
-1. **Hardware**: ¿qué GPU tienes (modelo y VRAM), cuánta RAM y qué sistema operativo?
-   De eso depende el tamaño del modelo (7–8B, 14B o 32B+).
-2. **Backend**: Ollama (más sencillo) o llama.cpp / vLLM (más control). Recomendación
-   inicial: Ollama.
-3. **Escenario E01** (temperamento): pendiente.
-4. **Interfaz inicial**: se propone terminal.
+## Preguntas abiertas
+
+1. ¿La RTX 5060 Ti es la versión de 8 GB o la de 16 GB?
+2. **Escenario E01** (temperamento): pendiente.
+3. **Interfaz inicial**: se propone terminal.
