@@ -6,7 +6,9 @@ Repositorio base para diseñar e implementar un sistema de inteligencia artifici
 
 - `src/ia/`: código del modelo y del entrenamiento.
 - `tests/`: pruebas automáticas (pytest).
-- `docs/plan.md`: fases del proyecto y decisiones de diseño.
+- `docs/vision.md`: visión de Luna (personalidad, relación, laboratorio mental).
+- `docs/plan.md`: objetivo, arquitectura propuesta, fases y decisiones.
+- `docs/temperamento/`: escenarios que definen su temperamento.
 - `data/`: datos pequeños de ejemplo (los grandes no se suben al repo).
 
 ## Uso
