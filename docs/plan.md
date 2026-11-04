@@ -17,8 +17,10 @@ actuando solo dentro de un sistema explícito de permisos.
 - **Línea A: Luna como investigadora.** Ayuda a Usx en sus investigaciones (laboratorio
   mental de cinco niveles).
 - **Línea B: Luna como objeto de investigación.** Su arquitectura es un banco de pruebas
-  para estudiar la abstracción simbólica y las teorías de la conciencia. Mejorarla
-  implica ir más allá de un modelo de lenguaje.
+  para estudiar la abstracción simbólica y las teorías de la conciencia. El ciclo es
+  **diagnosticar → intervenir → medir**: si el modelo de lenguaje no abstrae por sí solo
+  (E1), le **programamos** la capacidad que le falta, apoyándonos en la literatura, y
+  medimos si mejora.
 
 **Con qué datos.** Las conversaciones con Usx, las notas e investigaciones que ella
 genere y las fuentes que consulte. Todo se procesa y almacena **localmente**, y nada
@@ -73,9 +75,11 @@ Principios:
 ## Fases (paso a paso)
 
 0. Estructura del repositorio (hecho).
-1. **Núcleo local mínimo**: interfaz `LanguageModel` con un backend local y un backend
-   falso para pruebas, CLI de conversación, constitución cargada desde archivo y
-   memoria episódica en SQLite.
+1. **Núcleo con personalidad** (en curso): la personalidad como estructura explícita
+   (`personality/constitucion.toml`: principios con conductas observables "debe / no
+   debe"; `personality/automodelo_inicial.toml`: la parte mutable), memoria episódica en
+   SQLite con búsqueda, conversación por terminal con Ollama (`luna --model ...`), y
+   comandos para buscar y borrar recuerdos.
 2. **Capa simbólica v0**: grafo de afirmaciones con estado epistémico. El LLM extrae
    afirmaciones de la conversación, el grafo las guarda y un motor simple de reglas
    detecta contradicciones y cambios de creencia.
@@ -112,6 +116,14 @@ Principios:
   hace el experimento E1 (`docs/investigacion/neurosimbolica.md`), que mide si la
   abstracción simbólica explícita aporta algo frente al modelo de lenguaje solo. Su
   arnés (cliente de Ollama, tareas y ejecución de programas) se reutilizará en Luna.
+
+- **2026-11-04**: **La personalidad es un constructo neurosimbólico.** Los principios se
+  escriben como datos estructurados (símbolos), no solo como un prompt. Hoy se traducen
+  a instrucciones para el modelo; en fases siguientes, la misma estructura servirá para
+  verificar las respuestas (un "crítico" que compruebe las conductas "debe / no debe") y
+  para evaluar los escenarios de temperamento.
+- **2026-11-04**: Constitución (fija, en el repo) separada del automodelo (mutable,
+  guardado en `~/.luna/`, fuera del repo, igual que la memoria).
 
 ## Preguntas abiertas
 

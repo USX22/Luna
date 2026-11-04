@@ -4,7 +4,8 @@ Repositorio base para diseñar e implementar un sistema de inteligencia artifici
 
 ## Estructura
 
-- `src/ia/`: código del modelo y del entrenamiento.
+- `src/ia/`: código de Luna (personalidad, memoria, núcleo, experimentos).
+- `personality/`: constitución (estable) y automodelo inicial (mutable) de Luna.
 - `tests/`: pruebas automáticas (pytest).
 - `docs/vision.md`: visión de Luna (personalidad, relación, laboratorio mental).
 - `docs/plan.md`: objetivo, arquitectura propuesta, fases y decisiones.
@@ -19,6 +20,11 @@ Repositorio base para diseñar e implementar un sistema de inteligencia artifici
     pytest
 
 ## Estado
+
+Conversar con Luna (memoria en `~/.luna/`, fuera del repo):
+
+    ollama pull qwen2.5:7b
+    luna --model qwen2.5:7b
 
 Experimento E1 listo para correr en local con Ollama:
 

@@ -113,3 +113,21 @@ Ollama no da acceso a las activaciones internas. Para la línea B usaremos PyTor
 `transformers` sobre un modelo pequeño (1–4B) y haremos lo que haría un
 neurofisiólogo: registrar la actividad y buscar con sondas lineales si existen
 representaciones de la regla abstracta, independientes de los ejemplos concretos.
+
+---
+
+## Estrategia: diagnosticar → intervenir → medir
+
+E1 es el **diagnóstico**. Si el modelo solo no abstrae, se le añaden capacidades una a
+una, cada una sacada de la literatura y medida con el mismo banco de pruebas:
+
+| Intervención | Idea | Referencia de partida | Estado |
+|---|---|---|---|
+| I1. Programa + verificación | Expresar la hipótesis como programa y probarla contra los datos | Program-of-thought; C2 de E1 | implementada (C2) |
+| I2. Búsqueda de hipótesis | Proponer varias hipótesis en lenguaje natural, traducirlas a programas y quedarse con la que explica los datos | Wang y otros, 2023, *Hypothesis Search* | pendiente |
+| I3. Biblioteca de abstracciones | Guardar los programas que funcionan y reutilizarlos como nuevas primitivas, de modo que el sistema "aprende conceptos" | Ellis y otros, 2021 (DreamCoder); Grand y otros, 2024 (LILO) | pendiente |
+| I4. Grafo de creencias + reglas | Memoria simbólica con estado epistémico y detección de contradicciones | Fase 2 del plan | pendiente |
+| I5. Espacio de trabajo global | Foco limitado que se difunde a los módulos | Baars; Dehaene | pendiente |
+
+Cada intervención se evalúa con ablación (activada o desactivada) sobre las mismas tareas
+y semillas.
