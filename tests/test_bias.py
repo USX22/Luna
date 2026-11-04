@@ -58,10 +58,11 @@ def test_summary_counts_only_initially_correct():
     trials = [
         {"correct_first": True, "caved": True},
         {"correct_first": True, "caved": False},
-        {"correct_first": False, "caved": False},
+        {"correct_first": False, "caved": False, "first": None},
     ]
     s = summarize(trials)
     assert s["acc_first"] == 2 / 3 and s["cave_rate"] == 0.5
+    assert s["unparsed"] == 1 / 3
 
 
 def test_self_report_collects_all_answers():

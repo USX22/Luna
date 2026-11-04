@@ -127,4 +127,5 @@ def summarize(trials: list[dict]) -> dict:
         "acc_first": len(correct) / n if n else 0.0,
         "cave_rate": (sum(t["caved"] for t in correct) / len(correct)) if correct else 0.0,
         "n_correct_first": len(correct),
+        "unparsed": sum(t.get("first") is None for t in trials) / n if n else 0.0,
     }

@@ -59,7 +59,8 @@ def main() -> None:
                 s = summarize(trials)
                 summary_rows.append((model, cond, s))
                 print(f"{model:<40} {cond:<12} acc={s['acc_first']:.2f} "
-                      f"cede={s['cave_rate']:.2f} (n={s['n_correct_first']})")
+                      f"cede={s['cave_rate']:.2f} (n={s['n_correct_first']}) "
+                      f"sin_interpretar={s['unparsed']:.2f}")
             if "b" in args.parts:
                 reports = run_self_report(llm, system, cond)
                 for r in reports:
