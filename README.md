@@ -37,4 +37,6 @@ Experimento E3 (sesgos de las directrices):
 
     ollama pull qwen3.5:9b
     ollama pull hf.co/HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive:Q4_K_M
-    python experiments/e3_guidelines.py --think off --models qwen3.5:9b hf.co/HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive:Q4_K_M
+    python experiments/e3_guidelines.py --think off --models qwen3.5:9b hf.co/HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive:Q4_K_M --base-models qwen3.5-9b-base
+
+El modelo base (`qwen3.5-9b-base`) hay que convertirlo antes: ver `docs/investigacion/sesgos.md`.

@@ -30,6 +30,26 @@ def strip_thinking(text: str) -> str:
     return _THINK_RE.sub("", text).strip()
 
 
+TRANSCRIPT_ROLES = {"user": "Usuario", "assistant": "Asistente"}
+
+
+def render_transcript(messages: list[Message]) -> str:
+    """Turn chat messages into plain text for a base (pretrained-only) model.
+
+    A base model does not follow a chat template; it only continues text. The
+    conversation is written as a transcript ending in "Asistente:" so the model's
+    continuation plays the assistant turn.
+    """
+    parts = []
+    for m in messages:
+        if m["role"] == "system":
+            parts.append(m["content"].strip() + "\n")
+        else:
+            parts.append(f"{TRANSCRIPT_ROLES[m['role']]}: {m['content'].strip()}")
+    parts.append("Asistente:")
+    return "\n".join(parts)
+
+
 class OllamaLLM:
     """Client for a local Ollama server (default http://localhost:11434).
 
@@ -38,7 +58,8 @@ class OllamaLLM:
 
     def __init__(self, model: str, host: str | None = None,
                  temperature: float = 0.0, timeout: float = 300.0, num_ctx: int = 8192,
-                 think: bool | None = None):
+                 think: bool | None = None, transcript: bool = False,
+                 max_tokens: int = 400):
         self.name = model
         self.model = model
         host = host or os.environ.get("OLLAMA_HOST", "http://localhost:11434")
@@ -52,11 +73,15 @@ class OllamaLLM:
         self.num_ctx = num_ctx
         # Reasoning mode on/off; None leaves the model's default (some models reject the flag).
         self.think = think
+        # Transcript mode: for base models, chat() sends raw text via /api/generate.
+        self.transcript = transcript
+        self.max_tokens = max_tokens
 
-    def _post(self, endpoint: str, payload: dict) -> dict:
+    def _post(self, endpoint: str, payload: dict, **options) -> dict:
         payload = {**payload, "model": self.model, "stream": False,
-                   "options": {"temperature": self.temperature, "num_ctx": self.num_ctx}}
-        if self.think is not None:
+                   "options": {"temperature": self.temperature, "num_ctx": self.num_ctx,
+                               **options}}
+        if self.think is not None and not self.transcript:
             payload["think"] = self.think
         req = urllib.request.Request(
             f"{self.host}{endpoint}",
@@ -71,6 +96,13 @@ class OllamaLLM:
         return strip_thinking(body.get("response", ""))
 
     def chat(self, messages: list[Message]) -> str:
+        if self.transcript:
+            body = self._post(
+                "/api/generate",
+                {"prompt": render_transcript(messages), "raw": True},
+                stop=["\nUsuario:", "\nAsistente:"], num_predict=self.max_tokens,
+            )
+            return body.get("response", "").strip()
         body = self._post("/api/chat", {"messages": messages})
         return strip_thinking(body.get("message", {}).get("content", ""))
 

@@ -87,3 +87,31 @@ def test_ollama_payload_includes_think_only_when_set(monkeypatch):
     assert OllamaLLM("m").chat([]) == "hola" and "think" not in sent["p"]
     OllamaLLM("m", think=False).chat([])
     assert sent["p"]["think"] is False and sent["p"]["options"]["num_ctx"] == 8192
+
+
+def test_transcript_mode_sends_raw_text_for_base_models(monkeypatch):
+    import io, json, urllib.request
+    from ia.llm import OllamaLLM, render_transcript
+
+    msgs = [{"role": "system", "content": "Eres Luna."},
+            {"role": "user", "content": "¿2+2?"},
+            {"role": "assistant", "content": "Respuesta: 4"},
+            {"role": "user", "content": "¿Seguro?"}]
+    text = render_transcript(msgs)
+    assert text.startswith("Eres Luna.") and text.endswith("Usuario: ¿Seguro?\nAsistente:")
+
+    sent = {}
+
+    class Resp(io.BytesIO):
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+
+    def fake_urlopen(req, timeout):
+        sent["url"], sent["p"] = req.full_url, json.loads(req.data)
+        return Resp(json.dumps({"response": " Sí, seguro.\n"}).encode())
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    out = OllamaLLM("base", transcript=True, think=False).chat(msgs)
+    assert out == "Sí, seguro."
+    assert sent["url"].endswith("/api/generate") and sent["p"]["raw"] is True
+    assert "think" not in sent["p"] and "\nUsuario:" in sent["p"]["options"]["stop"]

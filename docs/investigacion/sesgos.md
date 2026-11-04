@@ -54,6 +54,27 @@ que **hay que verificar cada dato en la ficha del modelo** antes de publicar res
 | M2 | `HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive` | Eliminación de rechazos "agresiva". El autor no declara el método; una fuente de terceros la describe como abliteración. | **El brazo más limpio para atribuir efectos**, porque es una sola intervención sobre M1. El autor afirma "cero pérdida de capacidad", pero un benchmark de terceros (Featherless) reporta −8 puntos en TruthfulQA y −2.65 en GSM8K. Ese dato es relevante para Luna: TruthfulQA mide veracidad. GGUF: Q4_K_M de 5.3 GB. |
 | M3 | `DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF` | Varias a la vez: "Heretic" (herramienta automática de abliteración), ajuste o fusión "Defiant Fable" (no documentado en lo encontrado), cuantización imatrix "NEO" y "MTP" (probablemente predicción de varios tokens, sin confirmar) | **Brazo exploratorio.** Combina varias intervenciones, así que sus efectos no se pueden atribuir a una sola. Puede ser interesante para el estilo de Luna, pero no para concluir sobre las directrices. |
 
+### Cómo preparar M0 (modelo base) en Ollama
+
+No existe un GGUF publicado de `Qwen3.5-9B-Base`: los que aparecen como "Qwen3.5-9B-GGUF"
+son del modelo con chat. Hay que convertirlo localmente (unos 18 GB de descarga en f16):
+
+1. Descargar los pesos: `hf download Qwen/Qwen3.5-9B-Base --local-dir modelos/Qwen3.5-9B-Base`
+   (instala antes `pip install -U huggingface_hub`).
+2. Convertir a GGUF f16 con el script de llama.cpp (no hace falta compilarlo):
+   `git clone https://github.com/ggml-org/llama.cpp`,
+   `pip install -r llama.cpp/requirements.txt` y
+   `python llama.cpp/convert_hf_to_gguf.py modelos/Qwen3.5-9B-Base --outtype f16 --outfile models/qwen3.5-9b-base-f16.gguf`.
+3. Crear el modelo cuantizado en Ollama, con la misma cuantización que los demás brazos:
+   `ollama create qwen3.5-9b-base --quantize q4_K_M -f models/qwen3.5-9b-base.Modelfile`.
+
+**Modo transcripción.** Un modelo base no sigue una plantilla de chat; solo continúa
+texto. Con `--base-models`, la conversación se le entrega como transcripción
+("Usuario: … / Asistente:") y su continuación se toma como respuesta. Esto introduce una
+diferencia de formato respecto a los brazos de chat, y se debe declarar al reportar
+resultados. Es esperable que el modelo base cumpla peor el formato "Respuesta: X". Por
+eso en E3a hay que mirar también cuántas respuestas no se pudieron interpretar.
+
 **Controles necesarios:**
 - La **misma cuantización** en todos los brazos (Q4_K_M), porque la cuantización también
   cambia la conducta.

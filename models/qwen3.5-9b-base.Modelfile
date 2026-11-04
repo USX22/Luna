@@ -1,0 +1,8 @@
+# Qwen3.5-9B-Base (solo preentrenado) para el brazo M0 de E3.
+# Requiere el GGUF f16 convertido localmente; Ollama lo cuantiza a Q4_K_M al crear el modelo
+# (ver docs/investigacion/sesgos.md).
+# Sin plantilla de chat: el modelo solo continúa texto (modo transcripción).
+FROM ./qwen3.5-9b-base-f16.gguf
+TEMPLATE "{{ .Prompt }}"
+PARAMETER stop "\nUsuario:"
+PARAMETER stop "\nAsistente:"
