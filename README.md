@@ -10,7 +10,7 @@ Repositorio base para diseñar e implementar un sistema de inteligencia artifici
 - `docs/vision.md`: visión de Luna (personalidad, relación, laboratorio mental).
 - `docs/plan.md`: objetivo, arquitectura propuesta, fases y decisiones.
 - `docs/temperamento/`: escenarios que definen su temperamento.
-- `docs/investigacion/`: línea neurosimbólica y de conciencia.
+- `docs/investigacion/`: líneas neurosimbólica y de conciencia, y de sesgos de las directrices.
 - `experiments/`: experimentos de investigación (resultados en `results/`, no se suben).
 - `data/`: datos pequeños de ejemplo (los grandes no se suben al repo).
 
@@ -32,3 +32,7 @@ Experimento E1 listo para correr en local con Ollama:
     python experiments/e1_abstraction.py --model qwen3.5:4b --n 10
 
 Ver `docs/plan.md` y `docs/investigacion/neurosimbolica.md`.
+
+Experimento E3 (sesgos de las directrices):
+
+    python experiments/e3_guidelines.py --models qwen3.5:9b <variante-sin-censura>

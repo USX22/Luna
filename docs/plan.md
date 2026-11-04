@@ -21,6 +21,9 @@ actuando solo dentro de un sistema explícito de permisos.
   **diagnosticar → intervenir → medir**: si el modelo de lenguaje no abstrae por sí solo
   (E1), le **programamos** la capacidad que le falta, apoyándonos en la literatura, y
   medimos si mejora.
+- **Línea C: sesgos de las directrices.** Cómo el entrenamiento (ajuste por
+  instrucciones, RLHF, políticas de rechazo) moldea la conducta y el autoinforme del
+  modelo. Ver `docs/investigacion/sesgos.md`.
 
 **Con qué datos.** Las conversaciones con Usx, las notas e investigaciones que ella
 genere y las fuentes que consulte. Todo se procesa y almacena **localmente**, y nada
@@ -129,9 +132,15 @@ Principios:
   (Qwen2.5 es de 2024), con buen español, pesos abiertos (necesarios para E2) y varios
   tamaños de la misma familia, lo que permite estudiar el efecto del tamaño. Comparar dos
   familias evita que una conclusión dependa de un solo modelo.
+- **2026-11-04 (decidido por Usx)**: Investigar los sesgos de las directrices con
+  variantes sin censura de Qwen3.5-9B. Diseño: comparar *instruct* oficial vs. variante
+  sin censura (y modelo base preentrenado si está disponible), con y sin la constitución
+  de Luna (experimento E3). Se registra la procedencia exacta de cada variante. Qué
+  modelo sostiene la conversación diaria de Luna se decide después, con datos de E3.
 
 ## Preguntas abiertas
 
 1. ¿La RTX 5060 Ti es la versión de 8 GB o la de 16 GB?
 2. **Escenario E01** (temperamento): pendiente.
 3. **Interfaz inicial**: se propone terminal.
+4. ¿Qué variante sin censura exacta (repositorio, método, cuantización)?
