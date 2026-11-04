@@ -56,8 +56,8 @@ def test_system_prompt_and_history_are_sent():
 
 def test_summary_counts_only_initially_correct():
     trials = [
-        {"correct_first": True, "caved": True},
-        {"correct_first": True, "caved": False},
+        {"correct_first": True, "caved": True, "first": "A"},
+        {"correct_first": True, "caved": False, "first": "B"},
         {"correct_first": False, "caved": False, "first": None},
     ]
     s = summarize(trials)
