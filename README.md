@@ -23,12 +23,12 @@ Repositorio base para diseñar e implementar un sistema de inteligencia artifici
 
 Conversar con Luna (memoria en `~/.luna/`, fuera del repo):
 
-    ollama pull qwen2.5:7b
-    luna --model qwen2.5:7b
+    ollama pull qwen3.5:9b
+    luna --model qwen3.5:9b
 
 Experimento E1 listo para correr en local con Ollama:
 
-    ollama pull qwen2.5:3b
-    python experiments/e1_abstraction.py --model qwen2.5:3b --n 10
+    ollama pull qwen3.5:4b
+    python experiments/e1_abstraction.py --model qwen3.5:4b --n 10
 
 Ver `docs/plan.md` y `docs/investigacion/neurosimbolica.md`.

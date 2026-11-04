@@ -1,6 +1,6 @@
 """Talk to Luna in the terminal.
 
-    luna --model qwen2.5:7b
+    luna --model qwen3.5:9b
 
 Data (memory, self-model) lives in ~/.luna unless LUNA_HOME is set. It never goes
 into the repository.
@@ -29,7 +29,7 @@ def data_home() -> Path:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Conversar con Luna")
-    ap.add_argument("--model", default="qwen2.5:7b", help="modelo de Ollama")
+    ap.add_argument("--model", default="qwen3.5:9b", help="modelo de Ollama")
     ap.add_argument("--temperature", type=float, default=0.7)
     args = ap.parse_args()
 

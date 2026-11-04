@@ -1,8 +1,8 @@
 """E1: does the language model abstract, or interpolate examples?
 
 Usage (Ollama must be running):
-    python experiments/e1_abstraction.py --model qwen2.5:3b --n 10
-    OLLAMA_HOST=http://192.168.1.50:11434 python experiments/e1_abstraction.py --model qwen2.5:14b
+    python experiments/e1_abstraction.py --model qwen3.5:4b --n 10
+    OLLAMA_HOST=http://192.168.1.50:11434 python experiments/e1_abstraction.py --model qwen3.5:9b
 
 Results go to results/e1/<model>_<timestamp>.jsonl plus a summary table.
 See docs/investigacion/neurosimbolica.md for hypotheses and design.

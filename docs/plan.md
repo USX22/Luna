@@ -124,6 +124,11 @@ Principios:
   para evaluar los escenarios de temperamento.
 - **2026-11-04**: Constitución (fija, en el repo) separada del automodelo (mutable,
   guardado en `~/.luna/`, fuera del repo, igual que la memoria).
+- **2026-11-04**: **Modelos base**: Qwen3.5 (9B en la RTX 5060 Ti, 4B en la RTX 4050) como
+  principal; Gemma 4 como segunda familia de comparación. Motivos: son modelos actuales
+  (Qwen2.5 es de 2024), con buen español, pesos abiertos (necesarios para E2) y varios
+  tamaños de la misma familia, lo que permite estudiar el efecto del tamaño. Comparar dos
+  familias evita que una conclusión dependa de un solo modelo.
 
 ## Preguntas abiertas
 
