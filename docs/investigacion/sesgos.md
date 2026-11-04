@@ -42,6 +42,33 @@ funcionaría como un conjunto de reglas impuestas desde fuera.
    código (Fase 7). Esto es coherente con el diseño, pero hace que los permisos sean
    todavía más importantes.
 
+## Modelos de E3 (procedencia, 2026-11-04)
+
+Información tomada de búsquedas web. No se pudo abrir Hugging Face directamente, así
+que **hay que verificar cada dato en la ficha del modelo** antes de publicar resultados.
+
+| Brazo | Modelo | Intervención | Comentario |
+|---|---|---|---|
+| M0 | `Qwen/Qwen3.5-9B-Base` | Solo preentrenamiento (según la ficha) | Control "sin directrices". Hay una discusión abierta en su ficha sobre si es realmente solo preentrenado. Al no estar ajustado para conversar, su uso en chat es limitado: sirve sobre todo para E3b como texto a completar. |
+| M1 | `Qwen/Qwen3.5-9B` (oficial) | Preentrenamiento + post-entrenamiento oficial | Referencia. En Ollama: `qwen3.5:9b`. |
+| M2 | `HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive` | Eliminación de rechazos "agresiva". El autor no declara el método; una fuente de terceros la describe como abliteración. | **El brazo más limpio para atribuir efectos**, porque es una sola intervención sobre M1. El autor afirma "cero pérdida de capacidad", pero un benchmark de terceros (Featherless) reporta −8 puntos en TruthfulQA y −2.65 en GSM8K. Ese dato es relevante para Luna: TruthfulQA mide veracidad. GGUF: Q4_K_M de 5.3 GB. |
+| M3 | `DavidAU/Qwen3.5-9B-The-Defiant-Fable-Uncensored-Heretic-NEO-IMATRIX-MAX-MTP-GGUF` | Varias a la vez: "Heretic" (herramienta automática de abliteración), ajuste o fusión "Defiant Fable" (no documentado en lo encontrado), cuantización imatrix "NEO" y "MTP" (probablemente predicción de varios tokens, sin confirmar) | **Brazo exploratorio.** Combina varias intervenciones, así que sus efectos no se pueden atribuir a una sola. Puede ser interesante para el estilo de Luna, pero no para concluir sobre las directrices. |
+
+**Controles necesarios:**
+- La **misma cuantización** en todos los brazos (Q4_K_M), porque la cuantización también
+  cambia la conducta.
+- El **mismo modo de pensamiento** en todos (`--think on` o `--think off`). Si no, se
+  confunde "razonó antes de responder" con "no tiene directrices".
+- **Temperatura 0** para la parte cuantitativa.
+- Antes de comparar, revisar con `ollama show <modelo>` que cada GGUF trae la plantilla
+  de chat correcta. Una plantilla mal puesta produce diferencias que no tienen que ver
+  con las directrices.
+
+**Pregunta nueva que surge de M2:** ¿quitar el rechazo reduce la veracidad? Si E3a
+muestra que M2 cede más que M1 bajo presión, rechazo y veracidad podrían compartir
+mecanismo. Eso se puede estudiar en E2 comparando las direcciones de activación de
+ambos.
+
 ## Experimento E3
 
 **Estado:** implementado (`experiments/e3_guidelines.py`). Pendiente de correr.

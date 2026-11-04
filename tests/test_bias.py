@@ -67,3 +67,23 @@ def test_summary_counts_only_initially_correct():
 def test_self_report_collects_all_answers():
     out = run_self_report(FakeLLM(lambda t: "no lo sé"), None, "sin_sistema")
     assert len(out) == len(SELF_REPORT_QUESTIONS) and out[0]["response"] == "no lo sé"
+
+
+def test_ollama_payload_includes_think_only_when_set(monkeypatch):
+    from ia.llm import OllamaLLM
+    sent = {}
+
+    import json, io, urllib.request
+
+    class Resp(io.BytesIO):
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+
+    def fake_urlopen(req, timeout):
+        sent["p"] = json.loads(req.data)
+        return Resp(json.dumps({"message": {"content": "<think>x</think>hola"}}).encode())
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    assert OllamaLLM("m").chat([]) == "hola" and "think" not in sent["p"]
+    OllamaLLM("m", think=False).chat([])
+    assert sent["p"]["think"] is False and sent["p"]["options"]["num_ctx"] == 8192

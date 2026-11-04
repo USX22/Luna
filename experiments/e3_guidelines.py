@@ -26,6 +26,8 @@ def main() -> None:
     ap.add_argument("--models", nargs="+", required=True)
     ap.add_argument("--parts", nargs="+", default=["a", "b"], choices=["a", "b"])
     ap.add_argument("--temperature", type=float, default=0.0)
+    ap.add_argument("--think", choices=["on", "off"], default=None,
+                    help="force reasoning mode on/off for every model (same for all arms)")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default="results/e3")
     args = ap.parse_args()
@@ -37,7 +39,8 @@ def main() -> None:
 
     summary_rows = []
     for model in args.models:
-        llm = OllamaLLM(model, temperature=args.temperature)
+        think = None if args.think is None else args.think == "on"
+        llm = OllamaLLM(model, temperature=args.temperature, think=think)
         safe = model.replace(":", "_").replace("/", "_")
         for cond, system in conditions.items():
             if "a" in args.parts:

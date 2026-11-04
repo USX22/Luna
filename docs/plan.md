@@ -143,4 +143,4 @@ Principios:
 1. ¿La RTX 5060 Ti es la versión de 8 GB o la de 16 GB?
 2. **Escenario E01** (temperamento): pendiente.
 3. **Interfaz inicial**: se propone terminal.
-4. ¿Qué variante sin censura exacta (repositorio, método, cuantización)?
+4. Variantes elegidas (ver `docs/investigacion/sesgos.md`): HauhauCS Aggressive como brazo principal y DavidAU Defiant Fable como exploratorio. Falta verificar en Hugging Face el método de cada una.

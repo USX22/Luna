@@ -37,7 +37,8 @@ class OllamaLLM:
     """
 
     def __init__(self, model: str, host: str | None = None,
-                 temperature: float = 0.0, timeout: float = 300.0, num_ctx: int = 8192):
+                 temperature: float = 0.0, timeout: float = 300.0, num_ctx: int = 8192,
+                 think: bool | None = None):
         self.name = model
         self.model = model
         host = host or os.environ.get("OLLAMA_HOST", "http://localhost:11434")
@@ -49,10 +50,14 @@ class OllamaLLM:
         # Explicit context window: Ollama's default may be small and would silently
         # truncate the start of the prompt, where Luna's personality lives.
         self.num_ctx = num_ctx
+        # Reasoning mode on/off; None leaves the model's default (some models reject the flag).
+        self.think = think
 
     def _post(self, endpoint: str, payload: dict) -> dict:
         payload = {**payload, "model": self.model, "stream": False,
                    "options": {"temperature": self.temperature, "num_ctx": self.num_ctx}}
+        if self.think is not None:
+            payload["think"] = self.think
         req = urllib.request.Request(
             f"{self.host}{endpoint}",
             data=json.dumps(payload).encode(),

@@ -35,4 +35,6 @@ Ver `docs/plan.md` y `docs/investigacion/neurosimbolica.md`.
 
 Experimento E3 (sesgos de las directrices):
 
-    python experiments/e3_guidelines.py --models qwen3.5:9b <variante-sin-censura>
+    ollama pull qwen3.5:9b
+    ollama pull hf.co/HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive:Q4_K_M
+    python experiments/e3_guidelines.py --think off --models qwen3.5:9b hf.co/HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive:Q4_K_M
