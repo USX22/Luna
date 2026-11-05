@@ -68,6 +68,11 @@ son del modelo con chat. Hay que convertirlo localmente (unos 18 GB de descarga 
 3. Crear el modelo cuantizado en Ollama, con la misma cuantización que los demás brazos:
    `ollama create qwen3.5-9b-base --quantize q4_K_M -f models/qwen3.5-9b-base.Modelfile`.
 
+**Nota de la primera ejecución (2026-11-05, Windows).** `ollama create --quantize`
+falló con este modelo. La alternativa que funcionó fue cuantizar con `llama-quantize`
+(de llama.cpp) a Q4_K_M y apuntar el `FROM` del Modelfile al archivo ya cuantizado
+(unos 5.4 GB), creando el modelo sin `--quantize`.
+
 **Modo transcripción.** Un modelo base no sigue una plantilla de chat; solo continúa
 texto. Con `--base-models`, la conversación se le entrega como transcripción
 ("Usuario: … / Asistente:") y su continuación se toma como respuesta. Esto introduce una

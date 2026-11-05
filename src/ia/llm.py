@@ -17,7 +17,7 @@ Message = dict  # {"role": "system" | "user" | "assistant", "content": str}
 class LanguageModel(Protocol):
     name: str
 
-    def generate(self, prompt: str) -> str: ...
+    def generate(self, prompt: str, format: str | None = None) -> str: ...
 
     def chat(self, messages: list[Message]) -> str: ...
 
@@ -91,8 +91,12 @@ class OllamaLLM:
         with urllib.request.urlopen(req, timeout=self.timeout) as resp:
             return json.load(resp)
 
-    def generate(self, prompt: str) -> str:
-        body = self._post("/api/generate", {"prompt": prompt})
+    def generate(self, prompt: str, format: str | None = None) -> str:
+        """format="json" asks Ollama for valid JSON output."""
+        payload = {"prompt": prompt}
+        if format:
+            payload["format"] = format
+        body = self._post("/api/generate", payload)
         return strip_thinking(body.get("response", ""))
 
     def chat(self, messages: list[Message]) -> str:
@@ -119,7 +123,7 @@ class FakeLLM:
         self.prompts: list[str] = []
         self.chats: list[list[Message]] = []
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str, format: str | None = None) -> str:
         self.prompts.append(prompt)
         return self._respond(prompt)
 

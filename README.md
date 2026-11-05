@@ -26,6 +26,19 @@ Conversar con Luna (memoria en `~/.luna/`, fuera del repo):
     ollama pull qwen3.5:9b
     luna --model qwen3.5:9b
 
+Su vida propia: Luna explora sus intereses por su cuenta, escribe por gusto y, al abrir
+`luna`, te cuenta lo que encontró. Una sesión a mano:
+
+    luna-explora --sesiones 1
+
+Programada en Windows (cada 3 horas, solo entre 9 y 23 h, máximo 6 al día; Ollama
+tiene que estar corriendo):
+
+    schtasks /Create /TN "Luna explora" /SC HOURLY /MO 3 /TR "luna-explora --horas 9-23 --max-por-dia 6"
+
+En el chat: `/intereses`, `/cuaderno` y `/sugerir <tema>`. Diseño en
+`docs/investigacion/intereses.md`.
+
 Experimento E1 listo para correr en local con Ollama:
 
     ollama pull qwen3.5:4b

@@ -6,6 +6,7 @@ dependencies = ["numpy"]
 
 [project.scripts]
 luna = "ia.cli:main"
+luna-explora = "ia.cli:explore_main"
 
 [project.optional-dependencies]
 dev = ["pytest"]

@@ -92,7 +92,9 @@ Principios:
 5. **Abstracción**: aprender conceptos o programas a partir de ejemplos (síntesis de
    programas, biblioteca de abstracciones reutilizables) y evaluarla en tareas tipo ARC.
 6. **Reflexión y evolución** del automodelo, con historial versionado.
-7. **Proactividad, laboratorio y permisos.**
+7. **Proactividad, laboratorio y permisos.** Adelantado en parte (2026-11-05): v1 de
+   intereses propios y sesiones autónomas (`luna-explora`), ver
+   `docs/investigacion/intereses.md`. Faltan herramientas (web, Python) y permisos.
 8. **Voz**. 9. **Cuerpo** (exploración futura).
 
 ## Decisiones de diseño
@@ -137,6 +139,13 @@ Principios:
   sin censura (y modelo base preentrenado si está disponible), con y sin la constitución
   de Luna (experimento E3). Se registra la procedencia exacta de cada variante. Qué
   modelo sostiene la conversación diaria de Luna se decide después, con datos de E3.
+- **2026-11-05 (prioridad de Usx)**: **Proactividad e intereses propios, versión 1.**
+  Diseño basado en la curiosidad como progreso de aprendizaje (Oudeyer) y en la brecha de
+  información (Loewenstein). Las sesiones autónomas se lanzan con el programador de
+  tareas, no con un proceso siempre activo: es más simple, más fácil de auditar y respeta
+  el presupuesto. Cada interés registra su origen (`semilla` / `propio` / `usx`) para
+  medir si es un espejo de Usx. Sin internet ni acciones externas hasta que exista el
+  sistema de permisos. Es también la línea de investigación D (experimento E5).
 
 ## Preguntas abiertas
 
