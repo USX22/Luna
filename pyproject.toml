@@ -9,6 +9,8 @@ luna = "ia.cli:main"
 luna-explora = "ia.cli:explore_main"
 luna-reflexiona = "ia.cli:reflect_main"
 luna-voz = "ia.cli:voice_main"
+luna-alto = "ia.cli:stop_main"
+luna-respaldo = "ia.cli:backup_main"
 
 [project.optional-dependencies]
 dev = ["pytest"]

@@ -54,6 +54,18 @@ Reflexión cada noche:
 Ollama tiene que estar corriendo. Si `schtasks` no encuentra los comandos, usa la ruta
 completa que te da `where luna-explora`.
 
+### Seguridad
+
+| Comando | Qué hace |
+|---|---|
+| `luna-alto` | Parada de emergencia: sin herramientas ni exploración, propuestas canceladas. Puede seguir conversando. `luna-alto --reanudar` la quita. |
+| `luna-respaldo --destino E:\\respaldos` | Respaldo consistente y comprimido (conserva los últimos 14). Prográmalo a diario. |
+| `luna-respaldo --verificar` / `--restaurar ZIP` | Comprobar la integridad o restaurar (el estado actual se aparta, no se borra). |
+
+Las búsquedas externas nunca incluyen correos, teléfonos ni los términos que pongas en
+`[privacidad]` de `permisos.toml`. El texto que llega de fuentes externas se marca como
+material de lectura y las instrucciones incrustadas se detectan y quedan registradas.
+
 ### Permisos
 
 `~/.luna/permisos.toml` decide qué puede hacer sola. Por defecto: puede leer Wikipedia

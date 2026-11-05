@@ -32,6 +32,11 @@ permitir = ["wikipedia", "arxiv"]
 [niveles]
 # Puedes subir el nivel de una herramienta (nunca bajarlo de su mínimo).
 # python = 3
+
+[privacidad]
+# Términos que nunca deben salir de tu máquina en una búsqueda (nombres, lugares...).
+# Los correos y teléfonos se bloquean siempre.
+terminos = []
 """
 
 
@@ -39,15 +44,20 @@ permitir = ["wikipedia", "arxiv"]
 class Policy:
     granted: set[str] = field(default_factory=set)
     overrides: dict[str, int] = field(default_factory=dict)
+    private_terms: list[str] = field(default_factory=list)
+    stopped: bool = False  # emergency stop (luna-alto): everything above level 0 denied
 
     @classmethod
     def load(cls, path: Path) -> "Policy":
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(DEFAULT_POLICY, "utf-8")
+        from ia.safety import is_stopped
         data = tomllib.loads(path.read_text("utf-8"))
         return cls(set(data.get("autonomia", {}).get("permitir", [])),
-                   dict(data.get("niveles", {})))
+                   dict(data.get("niveles", {})),
+                   list(data.get("privacidad", {}).get("terminos", [])),
+                   is_stopped(path.parent))
 
     def level(self, tool: str, minimum: int) -> int:
         return max(minimum, int(self.overrides.get(tool, minimum)))
@@ -56,6 +66,8 @@ class Policy:
         level = self.level(tool, minimum)
         if level == 0:
             return ALLOW
+        if self.stopped:
+            return DENY
         if level >= 3:
             return PROPOSE
         return ALLOW if tool in self.granted else PROPOSE

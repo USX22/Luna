@@ -14,6 +14,7 @@ from typing import Callable
 from ia.permissions import (
     ALLOW, CONFIRM_WORD, DENY, PROPOSE, JsonlStore, Policy, Proposals, now_iso,
 )
+from ia.safety import find_personal_data, injection_signals
 
 USER_AGENT = "Luna-research-assistant/0.1 (personal research project)"
 Fetch = Callable[[str], bytes]
@@ -101,6 +102,8 @@ class Outcome:
     decision: str
     result: str | None = None
     proposal_id: str | None = None
+    note: str = ""            # why it was denied, if it was
+    injection: list[str] = None  # suspicious instructions found in the result
 
 
 class Toolbox:
@@ -122,10 +125,20 @@ class Toolbox:
         decision = self.policy.decide(name, tool.level)
         entry = {"ts": now_iso(), "tool": name, "args": args, "reason": reason,
                  "decision": decision}
+        if decision == DENY:
+            note = "parada de emergencia activa" if self.policy.stopped else "no permitido"
+            self.log.append({**entry, "note": note})
+            return Outcome(DENY, note=note)
+        leaked = find_personal_data(str(args.get("query", "")), self.policy.private_terms)
+        if leaked and name != "python":
+            self.log.append({**entry, "decision": DENY, "note": "datos personales en la consulta"})
+            return Outcome(DENY, note="datos personales en la consulta")
         if decision == ALLOW:
             result = self._run(tool, args)
-            self.log.append({**entry, "result": result[:2000]})
-            return Outcome(ALLOW, result)
+            signals = injection_signals(result)
+            self.log.append({**entry, "result": result[:2000],
+                             **({"inyeccion": signals} if signals else {})})
+            return Outcome(ALLOW, result, injection=signals)
         proposal = self.proposals.add(name, args, reason, self.policy.level(name, tool.level))
         self.log.append({**entry, "proposal": proposal["id"]})
         return Outcome(PROPOSE, proposal_id=proposal["id"])
@@ -134,6 +147,8 @@ class Toolbox:
         p = self.proposals.get(pid)
         if p is None or p["status"] != "pendiente":
             return "No hay una propuesta pendiente con ese id."
+        if self.policy.stopped:
+            return "La parada de emergencia está activa (luna-alto --reanudar para quitarla)."
         if p["level"] >= 3 and confirmation != CONFIRM_WORD:
             return f"Es una acción de nivel 3: escribe /aprobar {pid} {CONFIRM_WORD}"
         tool = self.tools.get(p["tool"])
@@ -145,6 +160,14 @@ class Toolbox:
                          "decision": "aprobada por Usx", "proposal": pid,
                          "result": result[:2000]})
         return result
+
+    def cancel_all(self, reason: str) -> int:
+        pending = self.proposals.pending()
+        for p in pending:
+            self.proposals.update(p["id"], status="cancelada", result=reason)
+            self.log.append({"ts": now_iso(), "tool": p["tool"], "decision": "cancelada",
+                             "proposal": p["id"], "reason": reason})
+        return len(pending)
 
     def reject(self, pid: str) -> bool:
         p = self.proposals.get(pid)

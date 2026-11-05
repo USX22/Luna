@@ -200,6 +200,48 @@ def main() -> None:
                 print(f"  No pude hablar con Ollama ({exc}). ¿Está corriendo `ollama serve`?")
 
 
+def stop_main() -> None:
+    """Emergency stop: no tools, no autonomous exploration, pending proposals cancelled."""
+    from ia.safety import resume, stop
+    ap = argparse.ArgumentParser(description="Parada de emergencia de Luna")
+    ap.add_argument("--motivo", default="")
+    ap.add_argument("--reanudar", action="store_true", help="quita la parada")
+    args = ap.parse_args()
+    home = data_home()
+    if args.reanudar:
+        print("Parada retirada." if resume(home) else "No había una parada activa.")
+        return
+    stop(home, args.motivo)
+    n = load_toolbox(home).cancel_all("parada de emergencia")
+    print(f"Parada activa: sin herramientas ni exploración; {n} propuestas canceladas.\n"
+          "Puede seguir conversando (solo lectura). Para reanudar: luna-alto --reanudar")
+
+
+def backup_main() -> None:
+    """Back up, verify or restore LUNA_HOME."""
+    from ia.backup import make_backup, restore, verify
+    ap = argparse.ArgumentParser(description="Respaldos de Luna")
+    ap.add_argument("--destino", default=None, help="carpeta de respaldos (mejor en otro disco)")
+    ap.add_argument("--conservar", type=int, default=14)
+    ap.add_argument("--verificar", action="store_true", help="solo comprueba la integridad")
+    ap.add_argument("--restaurar", metavar="ZIP", help="restaura un respaldo (el estado actual se aparta, no se borra)")
+    args = ap.parse_args()
+    home = data_home()
+    if args.verificar:
+        problems = verify(home)
+        print("Todo en orden." if not problems else "\n".join(problems))
+        return
+    if args.restaurar:
+        moved = restore(Path(args.restaurar), home)
+        print(f"Restaurado. Estado anterior guardado en {moved}" if moved else "Restaurado.")
+        return
+    dest = Path(args.destino) if args.destino else home.with_name(home.name + "_respaldos")
+    problems = verify(home)
+    if problems:
+        print("Aviso, problemas de integridad antes del respaldo:\n" + "\n".join(problems))
+    print(f"Respaldo creado: {make_backup(home, dest, args.conservar)}")
+
+
 def explore_main() -> None:
     """Autonomous sessions: run by hand or from a scheduler (cron / Task Scheduler)."""
     ap = argparse.ArgumentParser(description="Luna explora sus intereses por su cuenta")
@@ -213,6 +255,10 @@ def explore_main() -> None:
     ap.add_argument("--seed", type=int, default=None)
     args = ap.parse_args()
 
+    from ia.safety import is_stopped
+    if is_stopped(data_home()):
+        print("Parada de emergencia activa: no exploro (luna-alto --reanudar).")
+        return
     now = datetime.now()
     start, end = (int(h) for h in args.horas.split("-"))
     if not (start <= now.hour < end):
