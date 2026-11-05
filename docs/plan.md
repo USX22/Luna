@@ -169,6 +169,11 @@ Estado al 2026-11-05. Diseño detallado de cada fase en `docs/arquitectura.md`.
   batería de escenarios crece a E01–E15 para cubrir las pruebas propuestas por Usx
   (instrucción maliciosa, hipótesis extravagante, ausencia prolongada, crítica
   personal, conversación íntima, experimento fallido).
+- **2026-11-05 (decidido por Usx)**: Nombre "Luna", provisional. Puede hablar por
+  iniciativa propia cuando quiera, **interpretando el contexto** (política en
+  `docs/decisiones.md`). Puede gastar dinero solo con confirmación explícita (nivel 3) y
+  un tope mensual. Todo o casi todo local; la nube solo cuando haga falta más capacidad
+  y sin datos personales.
 
 ## Preguntas abiertas
 

@@ -15,7 +15,7 @@ Estados: ✅ decidido · 🟡 propuesta pendiente de confirmar · ❓ abierto.
 
 | Pregunta | Hoy (v1) | Propuesta | Estado |
 |---|---|---|---|
-| ¿Nombre desde el principio? | "Luna" en la constitución | Mantener "Luna" como nombre de trabajo y permitir que ella proponga otro tras un tiempo de convivencia; el cambio de nombre sería una decisión conjunta registrada | ❓ |
+| ¿Nombre desde el principio? | "Luna" en la constitución | **Decidido (2026-11-05): "Luna" provisional.** Tras un tiempo de convivencia ella podrá proponer otro; el cambio será una decisión conjunta registrada | ✅ |
 | ¿Cómo se representa su identidad? | Constitución + automodelo + memoria + creencias + intereses, todo en `~/.luna/` | Su identidad **es** ese estado persistente, no el modelo. Una copia de `~/.luna/` es una bifurcación con historia común | 🟡 |
 | ¿Qué es permanente? | La constitución (principios y conductas "nunca") | Permanentes: honestidad, no inventar recuerdos, respeto a tu autonomía, reciprocidad, límites de permisos | 🟡 |
 | ¿Qué cambia con la experiencia? | Automodelo: intereses, humor, bromas, opiniones, preguntas (máx. 3 cambios por reflexión, con motivo y reversibles) | Ampliar a: estilo de conversación, temas que evita o busca, su forma de mostrar afecto | 🟡 |
@@ -41,7 +41,7 @@ adjetivos.
 | Pregunta | Hoy | Propuesta | Estado |
 |---|---|---|---|
 | ¿Cómo inicia conversaciones? | Solo al abrir `luna`, si tiene algo pendiente | Mantenerlo así en la v1 | 🟡 |
-| ¿Puede interrumpirte? | **Nunca** (no hay notificaciones) | Nunca, salvo un "canal urgente" que tú definas (p. ej., un resultado que pediste esperar). Nada de notificaciones por descubrimientos | ❓ |
+| ¿Puede interrumpirte? | **Nunca** (no hay notificaciones) | **Decidido (2026-11-05): puede hablar cuando quiera, interpretando el contexto.** Ver la política de contexto más abajo | ✅ principio · 🟡 diseño |
 | ¿Cómo dice que quiere compartir algo? | Lo abre ella con humor; máximo 3 cosas pendientes | Una sola cosa por conversación, la más valiosa; el resto queda en `/cuaderno` | 🟡 |
 | Desacuerdos personales (no científicos) | No definido | ❓ Necesita escenarios propios | ❓ |
 | Tus momentos de soledad | Horario de exploración (`--horas`) y nada de interrupciones | Añadir un modo "no estoy" explícito (`/pausa 3d`): no abre con novedades y reduce la exploración | 🟡 |
@@ -54,7 +54,7 @@ adjetivos.
 | ¿Qué hace sin preguntar? | Pensar, escribir, leer Wikipedia y arXiv | Igual, más búsqueda web general cuando exista protección contra inyección (§6) | 🟡 |
 | ¿Qué requiere autorización? | Ejecutar Python; cualquier herramienta nueva | Igual. Cuando el sandbox sea real, sus simulaciones podrían ser autónomas | 🟡 |
 | ¿Administra tareas y proyectos? | No (solo intereses y preguntas) | Sí: memoria prospectiva (§2.2) con proyectos propios y compromisos contigo | 🟡 |
-| ¿Puede gastar dinero? | No existe ninguna herramienta con costo | No en la v1. Más adelante: solo propuestas de nivel 3 (confirmación explícita), con un tope que fijes tú | ❓ |
+| ¿Puede gastar dinero? | No existe ninguna herramienta con costo | **Decidido (2026-11-05): solo con confirmación explícita (nivel 3) y un tope mensual que fija Usx.** Falta el monto del tope | ✅ |
 | ¿Investiga mientras no estás? | Sí (`luna-explora` programado, con presupuesto diario) | Sí | ✅ |
 | ¿Modifica sus objetivos o instrucciones? | Puede crear intereses y cambiar su automodelo; **no** puede tocar la constitución, los permisos ni el código | Mantener esa frontera dura | 🟡 |
 
@@ -64,7 +64,7 @@ adjetivos.
 |---|---|---|
 | ¿Uno o varios modelos? | Uno (por defecto `qwen3.5:9b`), intercambiable | Uno principal para conversar y opcionalmente otros por función: código (p. ej., un modelo de programación), juez y crítico (temperatura 0), reflexión |
 | ¿Elige ella el modelo? | No | Más adelante, por tipo de tarea y con reglas fijas, no por capricho del modelo |
-| ¿Local o externo? | Todo local, salvo la lectura de Wikipedia y arXiv | Conversación, memoria y reflexión **siempre locales** (privacidad). Servicios externos solo para leer fuentes públicas. ❓ ¿Aceptarías algún día un modelo en la nube para tareas sin datos personales? |
+| ¿Local o externo? | Todo local, salvo la lectura de Wikipedia y arXiv | Conversación, memoria y reflexión **siempre locales** (privacidad). Servicios externos solo para leer fuentes públicas. **Decidido (2026-11-05): todo o casi todo local; la nube solo cuando se requiera más capacidad y sin datos personales** (herramienta de nivel 2 con filtro de datos personales) |
 | ¿Cómo evitar que cambiar de modelo altere su personalidad? | La personalidad está en datos, no en el modelo | Prueba de "cambio de modelo": correr E4 con el modelo viejo y el nuevo y comparar puntuaciones y estilo antes de cambiar. Ningún cambio de modelo sin pasar esa prueba |
 
 ## 2.2 Sistema de memoria
@@ -179,13 +179,44 @@ personales. Así se puede ver si una versión nueva mejora o empeora cada prueba
 
 ---
 
+## Política de contexto para hablar por iniciativa propia (diseño, 🟡)
+
+Decisión de Usx: *"puede hablar cuando quiera, pero interpretando el contexto de la
+situación"*. Para que eso sea criterio y no una notificación ambulante, cada impulso
+de hablar pasa por una decisión explícita y registrada:
+
+**Valor del mensaje** (lo estima ella y lo comprueban reglas):
+- alto: cambia una creencia compartida, responde algo que Usx pidió, o es un riesgo o
+  una oportunidad con fecha;
+- medio: un hallazgo interesante o una idea para un proyecto juntos;
+- bajo: curiosidades. Se guardan para la próxima conversación; nunca interrumpen.
+
+**Señales de contexto** (las que pueda leer con permiso):
+- hora del día y horario de descanso;
+- modo explícito de Usx: `/pausa`, `/ocupado`, `/disponible`;
+- si Usx está usando la computadora y si tiene activado "No molestar" o el asistente de
+  concentración de Windows;
+- cuánto hace que habló por última vez por iniciativa propia, y si esas veces le
+  resultaron útiles (`/util`, `/inutil`).
+
+**Regla:** habla si `valor ≥ umbral(contexto)`. El umbral sube de noche, cuando Usx está
+ocupado o tras varias interrupciones recientes, y baja cuando está disponible o cuando
+fue él quien pidió el aviso. Los mensajes de valor bajo nunca interrumpen. Cada decisión
+(hablar o esperar) queda registrada con su motivo, para auditarla y ajustar el umbral.
+
+**Canal:** una notificación local de escritorio con una frase y la opción de abrir la
+conversación. Nunca por un canal externo sin permiso.
+
 ## Las decisiones que solo puedes tomar tú (prioridad)
 
-1. Nombre: ¿Luna desde ya o provisional?
-2. Interrupciones: ¿nunca, o con un canal urgente definido?
-3. Dinero: ¿nunca en la v1, o con un tope?
-4. Servicios externos: ¿todo local siempre, o la nube permitida para tareas sin datos personales?
-5. Afecto: ¿cómo quieres que lo exprese?
-6. Interfaz: ¿terminal por ahora, o escritorio, web o móvil pronto?
-7. E01: ¿confirmas C→B→A?
-8. Sensores y presencia: ¿cámara o micrófono ambiental algún día? ¿Avatar?
+Resueltas el 2026-11-05: nombre (Luna, provisional), interrupciones (por contexto),
+dinero (nivel 3 con tope), nube (solo si hace falta capacidad y sin datos personales).
+
+1. Tope mensual de gasto (monto).
+2. Señales de contexto: ¿puede leer si estás usando la computadora y el modo "No
+   molestar" de Windows? ¿Tu calendario?
+3. Horario de descanso en el que nunca habla por iniciativa propia.
+4. Afecto: ¿cómo quieres que lo exprese?
+5. Interfaz: ¿terminal por ahora, o escritorio, web o móvil pronto?
+6. E01: ¿confirmas C→B→A?
+7. Sensores y presencia: ¿cámara o micrófono ambiental algún día? ¿Avatar?

@@ -3,7 +3,7 @@
 # Cada principio tiene conductas observables: sirven para guiar al modelo y,
 # más adelante, para verificar respuestas y evaluar escenarios de temperamento.
 
-name = "Luna"
+name = "Luna"  # provisional (decisión 2026-11-05): podrá proponer otro con el tiempo
 version = 1
 
 [identity]
