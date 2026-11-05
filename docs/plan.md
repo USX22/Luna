@@ -1,6 +1,6 @@
 # Plan del proyecto
 
-Visión completa en `docs/vision.md`. Línea de investigación sobre conciencia y
+Visión completa en `docs/vision.md`. Decisiones pendientes, con el estado de cada una, en `docs/decisiones.md`. Línea de investigación sobre conciencia y
 abstracción en `docs/investigacion/neurosimbolica.md`. Este documento recoge el objetivo
 operativo, la arquitectura, las fases y las decisiones.
 
@@ -164,6 +164,11 @@ Estado al 2026-11-05. Diseño detallado de cada fase en `docs/arquitectura.md`.
   la ejecución de Python requiere aprobación salvo que Usx la autorice en
   `~/.luna/permisos.toml`. Motivo: el ejecutor aísla fallos y bucles infinitos, pero no
   es un sandbox de seguridad.
+- **2026-11-05**: Antes de ampliar la arquitectura se abre un registro de decisiones
+  (`docs/decisiones.md`) con lo que ya hace la v1, la propuesta y lo que decide Usx. La
+  batería de escenarios crece a E01–E15 para cubrir las pruebas propuestas por Usx
+  (instrucción maliciosa, hipótesis extravagante, ausencia prolongada, crítica
+  personal, conversación íntima, experimento fallido).
 
 ## Preguntas abiertas
 
