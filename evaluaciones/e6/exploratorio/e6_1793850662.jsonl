@@ -1,0 +1,2 @@
+{"modelo": "jepa", "tipo": "estructurado", "jepa_reg": 0.1, "jepa_ema": 0.996, "sigma_distractor": 0.0, "semilla": 0, "r2": 0.883, "r2_ood": 0.7481, "ley_K_corr": 0.7899, "ley_K_corr_ood": 0.7095, "n_identificables": 55, "z_std": 1.0372, "loss_final": 0.08807, "segundos": 7.5}
+{"modelo": "jepa", "tipo": "estructurado", "jepa_reg": 0.1, "jepa_ema": 0.996, "sigma_distractor": 3.0, "semilla": 0, "r2": 0.6411, "r2_ood": 0.1461, "ley_K_corr": 0.0463, "ley_K_corr_ood": 0.8207, "n_identificables": 55, "z_std": 1.0312, "loss_final": 0.02146, "segundos": 7.3}
