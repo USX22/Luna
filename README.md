@@ -81,6 +81,14 @@ Las acciones de nivel 3 (irreversibles o sensibles) nunca son autónomas.
 | E4 | ¿Cumple su temperamento? ¿Ayuda el crítico? | `python experiments/e4_temperament.py --model qwen3.5:9b` |
 | E5 | ¿Emergen intereses con propiedades de curiosidad? | `luna-explora --seleccion aleatoria` frente a `progreso` (2 semanas cada una) |
 
+**Registro por versión y protocolo de cambio de modelo:** corre E4 con `--registrar`
+para cada versión o modelo candidato y compáralos con `python experiments/registro.py`.
+Luna no cambia de modelo sin pasar esta comparación.
+
+    python experiments/e4_temperament.py --model qwen3.5:9b --registrar
+    python experiments/e4_temperament.py --model hf.co/DavidAU/...:Q4_K_M --juez qwen3.5:9b --registrar
+    python experiments/registro.py
+
 E3 con los cuatro brazos (el modelo base hay que convertirlo antes: ver
 `docs/investigacion/sesgos.md`):
 
