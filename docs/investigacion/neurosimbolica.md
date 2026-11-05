@@ -124,10 +124,15 @@ una, cada una sacada de la literatura y medida con el mismo banco de pruebas:
 | Intervención | Idea | Referencia de partida | Estado |
 |---|---|---|---|
 | I1. Programa + verificación | Expresar la hipótesis como programa y probarla contra los datos | Program-of-thought; C2 de E1 | implementada (C2) |
-| I2. Búsqueda de hipótesis | Proponer varias hipótesis en lenguaje natural, traducirlas a programas y quedarse con la que explica los datos | Wang y otros, 2023, *Hypothesis Search* | pendiente |
-| I3. Biblioteca de abstracciones | Guardar los programas que funcionan y reutilizarlos como nuevas primitivas, de modo que el sistema "aprende conceptos" | Ellis y otros, 2021 (DreamCoder); Grand y otros, 2024 (LILO) | pendiente |
-| I4. Grafo de creencias + reglas | Memoria simbólica con estado epistémico y detección de contradicciones | Fase 2 del plan | pendiente |
-| I5. Espacio de trabajo global | Foco limitado que se difunde a los módulos | Baars; Dehaene | pendiente |
+| I2. Búsqueda de hipótesis | Proponer varias hipótesis en lenguaje natural, traducirlas a programas y quedarse con la que explica los datos | Wang y otros, 2023, *Hypothesis Search* | implementada (C3 en E1) |
+| I3. Biblioteca de abstracciones | Guardar los programas que funcionan y reutilizarlos como nuevas primitivas, de modo que el sistema "aprende conceptos" | Ellis y otros, 2021 (DreamCoder); Grand y otros, 2024 (LILO) | implementada (C4 en E1; la biblioteca crece de tarea en tarea, en orden de profundidad) |
+| I4. Grafo de creencias + reglas | Memoria simbólica con estado epistémico y detección de contradicciones | Fase 2 del plan | implementada (`src/ia/beliefs.py`) |
+| I5. Espacio de trabajo global | Foco limitado que se difunde a los módulos | Baars; Dehaene | implementada (`src/ia/workspace.py`, `luna --foco N`) |
+
+Uso: `python experiments/e1_abstraction.py --model qwen3.5:9b --conditions C0 C2 C3 C4`.
+Pregunta específica de C4: ¿los programas posteriores **reutilizan** las abstracciones
+anteriores (campo `used`) y eso mejora la profundidad 2–3? Si la biblioteca crece pero
+nadie la usa, la "abstracción" no se está transfiriendo.
 
 Cada intervención se evalúa con ablación (activada o desactivada) sobre las mismas tareas
 y semillas.

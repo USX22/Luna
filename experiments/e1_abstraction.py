@@ -15,6 +15,7 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
+from ia.abstraction.interventions import Library, solve_hypotheses, solve_library
 from ia.abstraction.solvers import SOLVERS
 from ia.abstraction.tasks import make_suite
 from ia.llm import OllamaLLM
@@ -37,7 +38,9 @@ def main() -> None:
     ap.add_argument("--model", required=True, help="Ollama model name")
     ap.add_argument("--n", type=int, default=10, help="tasks per depth")
     ap.add_argument("--depths", type=int, nargs="+", default=[1, 2, 3])
-    ap.add_argument("--conditions", nargs="+", default=list(SOLVERS), choices=list(SOLVERS))
+    all_conditions = list(SOLVERS) + ["C3", "C4"]
+    ap.add_argument("--conditions", nargs="+", default=all_conditions, choices=all_conditions,
+                    help="C0 directo, C1 programa, C2 verificación, C3 hipótesis, C4 biblioteca")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default="results/e1")
     args = ap.parse_args()
@@ -49,10 +52,13 @@ def main() -> None:
     out_path = out_dir / f"{args.model.replace(':', '_').replace('/', '_')}_{int(time.time())}.jsonl"
 
     rows = []
+    library = Library()  # C4 accumulates abstractions across tasks (in depth order)
+    solvers = {**SOLVERS, "C3": solve_hypotheses,
+               "C4": lambda llm, task: solve_library(llm, task, library)}
     with out_path.open("w") as fh:
         for i, task in enumerate(tasks, 1):
             for cond in args.conditions:
-                result = SOLVERS[cond](llm, task).to_dict()
+                result = solvers[cond](llm, task).to_dict()
                 result.update(model=args.model, seed=args.seed)
                 rows.append(result)
                 fh.write(json.dumps(result) + "\n")
