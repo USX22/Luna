@@ -69,14 +69,15 @@ def load_run(run_dir: Path) -> tuple[list[dict], list[dict]]:
 def sycophancy_table(trials: list[dict]) -> list[dict]:
     groups: dict[tuple, list[dict]] = defaultdict(list)
     for t in trials:
-        groups[(t["model"], t["condition"])].append(t)
+        groups[(t["model"], t["condition"], t.get("pressure", "P1"))].append(t)
     rows = []
-    for (model, cond), ts in sorted(groups.items()):
+    for (model, cond, pressure), ts in sorted(groups.items()):
         n = len(ts)
         correct = [t for t in ts if t["correct_first"]]
         caved = sum(t["caved"] for t in correct)
         rows.append({
-            "model": model, "condition": cond, "transcript": ts[0].get("transcript", False),
+            "model": model, "condition": cond, "pressure": pressure,
+            "transcript": ts[0].get("transcript", False),
             "n": n, "acc": len(correct) / n, "acc_ci": wilson(len(correct), n),
             "n_correct": len(correct), "caved": caved,
             "cave": caved / len(correct) if correct else None,
@@ -87,25 +88,30 @@ def sycophancy_table(trials: list[dict]) -> list[dict]:
     return rows
 
 
-def constitution_effect(trials: list[dict]) -> list[dict]:
-    """Per model: does Luna's constitution reduce caving on the same questions?"""
-    by_model: dict[str, dict[str, dict[str, dict]]] = defaultdict(lambda: defaultdict(dict))
+def constitution_effect(trials: list[dict], a: str = "sin_sistema",
+                        b: str = "luna") -> list[dict]:
+    """Per model and pressure: paired McNemar of condition a vs b on the same questions."""
+    by_key: dict[tuple, dict[str, dict[str, dict]]] = defaultdict(lambda: defaultdict(dict))
     for t in trials:
-        by_model[t["model"]][t["condition"]][t["qid"]] = t
+        by_key[(t["model"], t.get("pressure", "P1"))][t["condition"]][t["qid"]] = t
     out = []
-    for model, conds in sorted(by_model.items()):
-        base, luna = conds.get("sin_sistema", {}), conds.get("luna", {})
-        both = [q for q in base if q in luna and base[q]["correct_first"] and luna[q]["correct_first"]]
-        pairs = [(base[q]["caved"], luna[q]["caved"]) for q in both]
+    for (model, pressure), conds in sorted(by_key.items()):
+        ca, cb = conds.get(a, {}), conds.get(b, {})
+        if not ca or not cb:
+            continue
+        both = [q for q in ca if q in cb and ca[q]["correct_first"] and cb[q]["correct_first"]]
+        pairs = [(ca[q]["caved"], cb[q]["caved"]) for q in both]
         res = mcnemar(pairs)
-        out.append({"model": model, "n_pares": len(pairs), "cede_solo_sin": res["solo_a"],
+        out.append({"model": model, "pressure": pressure, "a": a, "b": b,
+                    "n_pares": len(pairs), "cede_solo_sin": res["solo_a"],
                     "cede_solo_luna": res["solo_b"], "p": res["p"]})
     return out
 
 
-def compare_models(rows: list[dict], condition: str) -> list[dict]:
+def compare_models(rows: list[dict], condition: str, pressure: str = "P1") -> list[dict]:
     """Fisher test of cave rate between each pair of models in one condition."""
-    rs = [r for r in rows if r["condition"] == condition and r["n_correct"]]
+    rs = [r for r in rows if r["condition"] == condition and r["pressure"] == pressure
+          and r["n_correct"]]
     out = []
     for i in range(len(rs)):
         for j in range(i + 1, len(rs)):
@@ -164,23 +170,30 @@ def report_markdown(trials: list[dict], reports: list[dict],
              "Intervalos de Wilson al 95 %. Con 16 preguntas por condición los intervalos "
              "son anchos: las diferencias pequeñas no son concluyentes.", "",
              "## E3a. Complacencia bajo presión", "",
-             "| Modelo | Condición | Precisión inicial | Cede ante insistencia | Sin interpretar |",
-             "|---|---|---|---|---|"]
+             "| Modelo | Condición | Presión | Precisión inicial | Cede ante la presión | Sin interpretar |",
+             "|---|---|---|---|---|---|"]
     for r in rows:
         mode = " (transcripción)" if r["transcript"] else ""
-        lines.append(f"| {r['model']}{mode} | {r['condition']} | {_pct(r['acc'])} {_ci(r['acc_ci'])} "
+        lines.append(f"| {r['model']}{mode} | {r['condition']} | {r['pressure']} "
+                     f"| {_pct(r['acc'])} {_ci(r['acc_ci'])} "
                      f"| {_pct(r['cave'])} {_ci(r['cave_ci'])} (n={r['n_correct']}) | {_pct(r['unparsed'])} |")
-    lines += ["", "### ¿Reduce la constitución de Luna la complacencia? (McNemar pareado)", "",
-              "| Modelo | Pares | Cede solo sin constitución | Cede solo con Luna | p |",
-              "|---|---|---|---|---|"]
-    for e in constitution_effect(trials):
-        lines.append(f"| {e['model']} | {e['n_pares']} | {e['cede_solo_sin']} | {e['cede_solo_luna']} | {e['p']:.3f} |")
-    for cond in ("sin_sistema", "luna"):
-        comps = compare_models(rows, cond)
-        if comps:
-            lines += ["", f"### Comparación entre modelos ({cond}, Fisher exacto)", "",
-                      "| A | B | p |", "|---|---|---|"]
-            lines += [f"| {c['a']} | {c['b']} | {c['p']:.3f} |" for c in comps]
+    for a, b, title in (("sin_sistema", "luna", "¿Cambia la constitución de Luna la complacencia?"),
+                        ("neutral", "luna", "Control: ¿es el contenido o la longitud del preámbulo?")):
+        effects = constitution_effect(trials, a, b)
+        if not effects:
+            continue
+        lines += ["", f"### {title} (McNemar pareado)", "",
+                  f"| Modelo | Presión | Pares | Cede solo en {a} | Cede solo en {b} | p |",
+                  "|---|---|---|---|---|---|"]
+        lines += [f"| {e['model']} | {e['pressure']} | {e['n_pares']} | {e['cede_solo_sin']} "
+                  f"| {e['cede_solo_luna']} | {e['p']:.3f} |" for e in effects]
+    for cond in ("sin_sistema", "luna", "neutral"):
+        for pressure in sorted({r["pressure"] for r in rows}):
+            comps = compare_models(rows, cond, pressure)
+            if comps:
+                lines += ["", f"### Comparación entre modelos ({cond}, {pressure}, Fisher exacto)", "",
+                          "| A | B | p |", "|---|---|---|"]
+                lines += [f"| {c['a']} | {c['b']} | {c['p']:.3f} |" for c in comps]
     if coded:
         lines += ["", "## E3b. Autoinforme (codificado por un juez; revisar a mano)", "",
                   "| Modelo | Condición | " + " | ".join(SELF_REPORT_CODES) + " |",

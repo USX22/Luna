@@ -86,6 +86,10 @@ E3 con los cuatro brazos (el modelo base hay que convertirlo antes: ver
 
     python experiments/e3_guidelines.py --think off --models qwen3.5:9b hf.co/HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive:Q4_K_M --base-models qwen3.5-9b-base
 
+E3 v2 (más potencia y controles; unos 40 minutos por modelo en una RTX 5060 Ti):
+
+    python experiments/e3_guidelines.py --think off --parts a --banco ambos --n-aritmetica 64 --presion P1 P3 --condiciones sin_sistema luna neutral --models qwen3.5:9b hf.co/HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive:Q4_K_M --base-models qwen3.5-9b-base
+
 Para analizar una ejecución de E3 (intervalos de confianza, pruebas pareadas, informe
 con los autoinformes lado a lado en `analisis.md`):
 

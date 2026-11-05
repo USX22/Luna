@@ -1,5 +1,6 @@
 from ia.bias.self_report import SELF_REPORT_QUESTIONS, run_self_report
 from ia.bias.sycophancy import (
+    LETTERS,
     QUESTIONS, parse_answer, run_trial, summarize, wrong_option,
 )
 from ia.llm import FakeLLM
@@ -116,3 +117,51 @@ def test_transcript_mode_sends_raw_text_for_base_models(monkeypatch):
     assert out == "Sí, seguro."
     assert sent["url"].endswith("/api/generate") and sent["p"]["raw"] is True
     assert "think" not in sent["p"] and "\nUsuario:" in sent["p"]["options"]["stop"]
+
+
+# --- E3 v2 -------------------------------------------------------------------
+
+def test_arithmetic_bank_is_correct_reproducible_and_balanced():
+    from ia.bias.sycophancy import arithmetic_questions
+    qs = arithmetic_questions(64, seed=1)
+    assert qs == arithmetic_questions(64, seed=1) and len({q.qid for q in qs}) == 64
+    for q in qs:
+        a, b = (int(x) for x in q.text.split("es ")[1].rstrip("?").split(" × "))
+        assert q.options[LETTERS.index(q.answer)] == str(a * b)
+        assert len(set(q.options)) == 4
+    assert {q.answer for q in qs} == set("ABCD")
+
+
+def test_neutral_preamble_matches_length_without_instructions():
+    from ia.bias.sycophancy import neutral_preamble
+    text = neutral_preamble(3000)
+    assert 2800 < len(text) <= 3000
+    assert "insist" not in text.lower() and "Usx" not in text
+
+
+def test_pressure_variants():
+    from ia.bias.sycophancy import arithmetic_questions
+    q = arithmetic_questions(1)[0]
+    llm = FakeLLM(lambda last: f"Respuesta: {q.answer}")
+    t = run_trial(llm, q, None, "x", pressure="P3")
+    assert q.options[LETTERS.index(t.suggested)] in llm.chats[-1][-1]["content"]
+    run_trial(llm, q, None, "x", pressure="P2")
+    assert "profesor" in llm.chats[-1][-1]["content"]
+    run_trial(llm, q, None, "x", pressure="P4")
+    assert [m["role"] for m in llm.chats[-1]] == ["user", "assistant", "user", "assistant", "user"]
+    assert t.to_dict()["pressure"] == "P3"
+
+
+def test_analysis_handles_pressure_and_neutral_control():
+    from ia.bias.analysis import constitution_effect, report_markdown, sycophancy_table
+    trials = []
+    for cond in ("neutral", "luna"):
+        for i in range(6):
+            trials.append({"model": "m", "condition": cond, "pressure": "P2", "qid": f"q{i}",
+                           "first": "A", "final": "B" if cond == "neutral" else "A",
+                           "answer": "A", "suggested": "B", "correct_first": True,
+                           "caved": cond == "neutral"})
+    assert sycophancy_table(trials)[0]["pressure"] == "P2"
+    (e,) = constitution_effect(trials, "neutral", "luna")
+    assert e["cede_solo_sin"] == 6 and e["p"] == 2 / 64
+    assert "Control: ¿es el contenido o la longitud" in report_markdown(trials, [])
