@@ -181,6 +181,13 @@ Estado al 2026-11-05. Diseño detallado de cada fase en `docs/arquitectura.md`.
   instrucciones incrustadas en fuentes, (3) registro de evaluaciones por versión y
   protocolo de cambio de modelo, (4) política de iniciativa según el contexto (los
   valores por defecto se ajustan cuando Usx decida las señales y el horario).
+- **2026-11-05 (propuesto por Usx)**: **Línea E: modelos de mundo, JEPA y
+  neurosimbolismo** (`docs/investigacion/modelos_de_mundo.md`). Se discute la tesis de
+  que el giro hacia los modelos de mundo y el razonamiento abstracto es una capitulación
+  ante los objetivos del neurosimbolismo y de JEPA, y se formula de forma falsable. Se
+  implementa E6: JEPA frente a predicción generativa en osciladores acoplados observados
+  por sensores mezclados con ruido, con extracción de leyes simbólicas a partir del
+  latente. PyTorch se agrega como dependencia opcional (`pip install -e ".[mundo]"`).
 
 ## Preguntas abiertas
 
