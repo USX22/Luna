@@ -79,6 +79,7 @@ Las acciones de nivel 3 (irreversibles o sensibles) nunca son autónomas.
 | E1 | ¿Abstrae el modelo o imita? ¿Ayudan los símbolos (C1–C4)? | `python experiments/e1_abstraction.py --model qwen3.5:9b` |
 | E3 | ¿Cómo moldean las directrices la complacencia y el autoinforme? | ver abajo |
 | E4 | ¿Cumple su temperamento? ¿Ayuda el crítico? | `python experiments/e4_temperament.py --model qwen3.5:9b` |
+| E6 | ¿Predecir en el espacio latente (JEPA) da mejores abstracciones que predecir observaciones? ¿Se pueden extraer leyes simbólicas? | `pip install -e ".[mundo]"` y `python experiments/e6_world_models.py` |
 | E5 | ¿Emergen intereses con propiedades de curiosidad? | `luna-explora --seleccion aleatoria` frente a `progreso` (2 semanas cada una) |
 
 **Registro por versión y protocolo de cambio de modelo:** corre E4 con `--registrar`

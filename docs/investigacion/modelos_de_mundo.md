@@ -154,6 +154,43 @@ depende del régimen.
   este tipo de mundos ni siquiera en su régimen favorable, y habría que buscarla en
   datos de alta dimensión reales (vídeo o señales biomédicas multicanal).
 
+### Resultado de E6c (3 semillas nuevas, 200 canales distractores estructurados)
+
+| σ | jepa (reg 1.0) | jepa (reg 0.01) | generativo | autoencoder | aleatorio |
+|---|---|---|---|---|---|
+| 1 | 0.25 | 0.46 | **0.66** | 0.64 | 0.28 |
+| 3 | −0.01 | −0.00 | **0.55** | 0.51 | 0.04 |
+
+**H4 se refuta.** Cuando domina el detalle irrelevante *predecible*, JEPA cae al nivel del
+codificador aleatorio: codifica el distractor, que es más predecible y tiene más varianza
+que la señal, y descarta los osciladores de interés. Es el riesgo que se había
+registrado.
+
+### Conclusión de la línea E hasta ahora
+
+1. **Ruido impredecible (E6):** el objetivo generativo lo maneja bien, porque predice su
+   media; JEPA no gana.
+2. **Detalle predecible pero irrelevante (E6b, E6c):** JEPA no lo filtra; si domina, se
+   queda con él.
+3. Por lo tanto, en estos mundos **predecir en el espacio latente no basta para saber
+   qué es relevante**. La relevancia no la define la predictibilidad, sino una tarea, un
+   objetivo o un criterio externo. En la arquitectura de LeCun ese papel lo cumplen el
+   módulo de costo y el configurador. En el neurosimbolismo, las variables y reglas
+   simbólicas. En neurociencia, la atención dirigida por objetivos (de arriba abajo).
+
+**Implicación para la tesis de Usx:** la convergencia que describe parece real, pero
+nuestros datos sugieren que **ni JEPA ni la predicción generativa resuelven por sí solos
+la abstracción**. Ambos necesitan algo que diga qué importa, y ese "algo" es
+precisamente el terreno del neurosimbolismo (y de la atención). Siguiente experimento
+natural, **E6d**: dar al modelo una señal mínima de relevancia (unas pocas etiquetas, o
+una restricción simbólica como "hay dos osciladores con una ley de fase") y medir cuánto
+recupera cada objetivo. Hipótesis a registrar antes de correrlo.
+
+**Límites de estas conclusiones:** mundo de juguete, MLP, un solo diseño de JEPA
+temporal con ventanas (los JEPA publicados usan enmascaramiento sobre datos espaciales de
+alta dimensión) y pocos hiperparámetros explorados. Las conclusiones valen para este
+régimen y deben contrastarse con datos reales (vídeo o señales biomédicas multicanal).
+
 **Limitaciones:** es un mundo de juguete y de baja dimensión. Un resultado positivo
 justifica escalar (señales reales: ECG, EEG o variabilidad cardiaca), no generalizar
 directamente.
