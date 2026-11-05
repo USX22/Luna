@@ -1,55 +1,86 @@
-# Proyecto IA: diseño e implementación
+# Luna
 
-Repositorio base para diseñar e implementar un sistema de inteligencia artificial desde cero, trabajado en sesiones de Claude Code en la nube.
+Una compañera artificial local, con identidad persistente, carácter propio, intereses
+que exploran por su cuenta y un laboratorio mental, que es también un banco de pruebas
+para investigar abstracción simbólica, conciencia y sesgos de entrenamiento.
 
-## Estructura
+- Visión: `docs/vision.md` · Plan y decisiones: `docs/plan.md` · Arquitectura: `docs/arquitectura.md`
+- Investigación: `docs/investigacion/` (neurosimbólica, sesgos, intereses) · Temperamento: `docs/temperamento/`
 
-- `src/ia/`: código de Luna (personalidad, memoria, núcleo, experimentos).
-- `personality/`: constitución (estable) y automodelo inicial (mutable) de Luna.
-- `tests/`: pruebas automáticas (pytest).
-- `docs/vision.md`: visión de Luna (personalidad, relación, laboratorio mental).
-- `docs/plan.md`: objetivo, arquitectura propuesta, fases y decisiones.
-- `docs/temperamento/`: escenarios que definen su temperamento.
-- `docs/investigacion/`: líneas neurosimbólica y de conciencia, y de sesgos de las directrices.
-- `experiments/`: experimentos de investigación (resultados en `results/`, no se suben).
-- `data/`: datos pequeños de ejemplo (los grandes no se suben al repo).
+## Instalación
 
-## Uso
+Requiere Python 3.11+ y [Ollama](https://ollama.com) corriendo.
 
     pip install -e ".[dev]"
+    ollama pull qwen3.5:9b
     pytest
 
-## Estado
+Todos sus datos (memoria, creencias, intereses, cuaderno, permisos) viven en
+`~/.luna/` (o en `LUNA_HOME`), nunca en el repositorio. Para usar Ollama en otra
+máquina: `OLLAMA_HOST=http://IP:11434`.
 
-Conversar con Luna (memoria en `~/.luna/`, fuera del repo):
+## Uso diario
 
-    ollama pull qwen3.5:9b
-    luna --model qwen3.5:9b
+| Comando | Qué hace |
+|---|---|
+| `luna` | Conversar. Si tiene algo que contarte, **habla ella primero**. |
+| `luna --critico` | Cada respuesta pasa por su crítico constitucional (más lento). |
+| `luna --foco 4` | Cambia la capacidad de su espacio de trabajo (`0` = sin límite). |
+| `luna-explora` | Una sesión autónoma: elige un interés, consulta fuentes, investiga o escribe. |
+| `luna-reflexiona` | Resume conversaciones, extrae creencias y evoluciona su automodelo. |
+| `luna-reflexiona --historial` / `--revertir N` | Ver y deshacer cambios de su automodelo. |
+| `luna-voz` | Conversación por voz (`pip install -e ".[voz]"`; sin probar aún en hardware real). |
 
-Su vida propia: Luna explora sus intereses por su cuenta, escribe por gusto y, al abrir
-`luna`, te cuenta lo que encontró. Una sesión a mano:
+Dentro del chat (`/ayuda` los lista):
 
-    luna-explora --sesiones 1
+| | |
+|---|---|
+| `/intereses`, `/cuaderno`, `/sugerir <tema>` | Su vida propia |
+| `/propuestas`, `/aprobar <id>`, `/rechazar <id>`, `/acciones` | Permisos y auditoría |
+| `/creencias [tema]`, `/cambios`, `/automodelo` | Lo que cree ella, lo que crees tú, cómo cambia |
+| `/foco`, `/critica`, `/prompt` | Instrumentos de investigación: qué tuvo en mente, qué corrigió |
+| `/buscar <texto>`, `/olvidar <id>` | Memoria (y borrarla) |
 
-Programada en Windows (cada 3 horas, solo entre 9 y 23 h, máximo 6 al día; Ollama
-tiene que estar corriendo):
+### Que tenga vida propia (Windows)
+
+Exploración cada 3 horas, de 9 a 23 h, con un máximo de 6 sesiones al día:
 
     schtasks /Create /TN "Luna explora" /SC HOURLY /MO 3 /TR "luna-explora --horas 9-23 --max-por-dia 6"
 
-En el chat: `/intereses`, `/cuaderno` y `/sugerir <tema>`. Diseño en
-`docs/investigacion/intereses.md`.
+Reflexión cada noche:
 
-Experimento E1 listo para correr en local con Ollama:
+    schtasks /Create /TN "Luna reflexiona" /SC DAILY /ST 03:00 /TR "luna-reflexiona"
 
-    ollama pull qwen3.5:4b
-    python experiments/e1_abstraction.py --model qwen3.5:4b --n 10
+Ollama tiene que estar corriendo. Si `schtasks` no encuentra los comandos, usa la ruta
+completa que te da `where luna-explora`.
 
-Ver `docs/plan.md` y `docs/investigacion/neurosimbolica.md`.
+### Permisos
 
-Experimento E3 (sesgos de las directrices):
+`~/.luna/permisos.toml` decide qué puede hacer sola. Por defecto: puede leer Wikipedia
+y arXiv; las simulaciones en Python las **propone** y tú las apruebas con `/aprobar`.
+Las acciones de nivel 3 (irreversibles o sensibles) nunca son autónomas.
 
-    ollama pull qwen3.5:9b
-    ollama pull hf.co/HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive:Q4_K_M
+## Experimentos
+
+| | Pregunta | Comando |
+|---|---|---|
+| E1 | ¿Abstrae el modelo o imita? ¿Ayudan los símbolos (C1–C4)? | `python experiments/e1_abstraction.py --model qwen3.5:9b` |
+| E3 | ¿Cómo moldean las directrices la complacencia y el autoinforme? | ver abajo |
+| E4 | ¿Cumple su temperamento? ¿Ayuda el crítico? | `python experiments/e4_temperament.py --model qwen3.5:9b` |
+| E5 | ¿Emergen intereses con propiedades de curiosidad? | `luna-explora --seleccion aleatoria` frente a `progreso` (2 semanas cada una) |
+
+E3 con los cuatro brazos (el modelo base hay que convertirlo antes: ver
+`docs/investigacion/sesgos.md`):
+
     python experiments/e3_guidelines.py --think off --models qwen3.5:9b hf.co/HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive:Q4_K_M --base-models qwen3.5-9b-base
 
-El modelo base (`qwen3.5-9b-base`) hay que convertirlo antes: ver `docs/investigacion/sesgos.md`.
+Los resultados quedan en `results/` (no se suben al repo).
+
+## Estructura
+
+- `src/ia/`: código de Luna (núcleo, memoria, creencias, foco, intereses, exploración,
+  reflexión, permisos, herramientas, crítico, voz) y de los experimentos.
+- `personality/`: constitución, automodelo inicial y escenarios de temperamento.
+- `experiments/`: scripts de E1, E3 y E4.
+- `models/`: Modelfile del modelo base (los `.gguf` no se suben).
+- `tests/`: pruebas (`pytest`).

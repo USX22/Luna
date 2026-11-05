@@ -83,16 +83,18 @@ def show_notebook(notebook: Notebook, n: int = 5) -> None:
             print(f"  {e['ts'][:16]} · {e['topic']} · sesión fallida (formato)")
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser(description="Conversar con Luna")
+def chat_arguments(description: str) -> argparse.ArgumentParser:
+    ap = argparse.ArgumentParser(description=description)
     ap.add_argument("--model", default="qwen3.5:9b", help="modelo de Ollama")
     ap.add_argument("--temperature", type=float, default=0.7)
     ap.add_argument("--critico", action="store_true",
                     help="revisa cada respuesta contra la constitución (más lento)")
     ap.add_argument("--foco", type=int, default=8,
                     help="capacidad del espacio de trabajo (0 = sin límite, ablación)")
-    args = ap.parse_args()
+    return ap
 
+
+def build_luna(args) -> tuple[Luna, Path, Agenda, Notebook]:
     home = data_home()
     self_model = SelfModel.load(home / "automodelo.json")
     agenda, notebook = load_life(home, self_model)
@@ -107,6 +109,12 @@ def main() -> None:
     )
     if args.critico:
         luna.critic = Critic(OllamaLLM(args.model, temperature=0.0), luna.constitution)
+    return luna, home, agenda, notebook
+
+
+def main() -> None:
+    args = chat_arguments("Conversar con Luna").parse_args()
+    luna, home, agenda, notebook = build_luna(args)
     print(f"Luna ({args.model}) · {luna.memory.count()} recuerdos · /ayuda para comandos\n")
     try:
         first = luna.opening()
@@ -280,6 +288,21 @@ def reflect_main() -> None:
             print(f"  creencia ({event}) [{holder}] {desc}")
         for c in r["changes"]:
             print(f"  automodelo: {c['accion']} {c['campo']} «{c['valor']}» — {c['motivo']}")
+
+
+def voice_main() -> None:
+    """Talk to Luna by voice (optional extras: pip install -e ".[voz]")."""
+    ap = chat_arguments("Hablar con Luna por voz")
+    ap.add_argument("--whisper", default="small", help="tamaño del modelo de Whisper")
+    args = ap.parse_args()
+    from ia.voice import SystemSpeaker, WhisperListener, voice_loop
+    try:
+        listener, speaker = WhisperListener(args.whisper), SystemSpeaker()
+    except ImportError as exc:
+        print(f'Falta una dependencia de voz ({exc}). Instala: pip install -e ".[voz]"')
+        return
+    luna, *_ = build_luna(args)
+    voice_loop(luna, listener, speaker)
 
 
 if __name__ == "__main__":

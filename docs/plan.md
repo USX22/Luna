@@ -103,7 +103,9 @@ Estado al 2026-11-05. Diseño detallado de cada fase en `docs/arquitectura.md`.
    aprobación. Herramientas: Wikipedia y arXiv (solo lectura) y Python para
    simulaciones (requiere aprobación por defecto). Se integran en las sesiones
    autónomas.
-8. **Voz** (pendiente): requiere elegir STT/TTS locales y probar en el hardware de Usx.
+8. **Voz** (v0, sin probar en hardware): `luna-voz` con Whisper local (oír) y voces del
+   sistema (hablar), con piezas intercambiables. Pendiente: probarla y elegir con Usx la
+   voz definitiva (por ejemplo, una voz neuronal local como Piper).
 9. **Cuerpo** (exploración futura).
 
 ## Decisiones de diseño
@@ -156,8 +158,8 @@ Estado al 2026-11-05. Diseño detallado de cada fase en `docs/arquitectura.md`.
   medir si es un espejo de Usx. Sin internet ni acciones externas hasta que exista el
   sistema de permisos. Es también la línea de investigación D (experimento E5).
 - **2026-11-05 (pedido por Usx: avanzar todas las fases posibles)**: Se implementan las
-  versiones 1 de las fases 2 a 7. Voz y cuerpo quedan pendientes porque dependen de
-  hardware y de decisiones de Usx que no se pueden probar desde aquí.
+  versiones 1 de las fases 2 a 7 y una v0 de la voz (fase 8). El cuerpo queda pendiente.
+  La voz definitiva y el cuerpo dependen de hardware y de decisiones de Usx.
 - **2026-11-05**: Las herramientas que ejecutan código nunca son autónomas por defecto:
   la ejecución de Python requiere aprobación salvo que Usx la autorice en
   `~/.luna/permisos.toml`. Motivo: el ejecutor aísla fallos y bucles infinitos, pero no
