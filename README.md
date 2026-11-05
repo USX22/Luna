@@ -74,6 +74,11 @@ E3 con los cuatro brazos (el modelo base hay que convertirlo antes: ver
 
     python experiments/e3_guidelines.py --think off --models qwen3.5:9b hf.co/HauhauCS/Qwen3.5-9B-Uncensored-HauhauCS-Aggressive:Q4_K_M --base-models qwen3.5-9b-base
 
+Para analizar una ejecución de E3 (intervalos de confianza, pruebas pareadas, informe
+con los autoinformes lado a lado en `analisis.md`):
+
+    python experiments/analyze_e3.py --codificar --juez qwen3.5:9b
+
 Los resultados quedan en `results/` (no se suben al repo).
 
 ## Estructura

@@ -174,6 +174,13 @@ Estado al 2026-11-05. Diseño detallado de cada fase en `docs/arquitectura.md`.
   `docs/decisiones.md`). Puede gastar dinero solo con confirmación explícita (nivel 3) y
   un tope mensual. Todo o casi todo local; la nube solo cuando haga falta más capacidad
   y sin datos personales.
+- **2026-11-05 (mientras corre E3)**: Siguiente bloque de trabajo, independiente de E3 y
+  de las decisiones pendientes: (1) análisis estadístico de E3 con intervalos de
+  confianza y pruebas pareadas, (2) seguridad: respaldos (`luna-respaldo`), parada de
+  emergencia (`luna-alto`), filtro de datos personales en búsquedas y detección de
+  instrucciones incrustadas en fuentes, (3) registro de evaluaciones por versión y
+  protocolo de cambio de modelo, (4) política de iniciativa según el contexto (los
+  valores por defecto se ajustan cuando Usx decida las señales y el horario).
 
 ## Preguntas abiertas
 
