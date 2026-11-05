@@ -77,25 +77,34 @@ Principios:
 
 ## Fases (paso a paso)
 
+Estado al 2026-11-05. Diseño detallado de cada fase en `docs/arquitectura.md`.
+
 0. Estructura del repositorio (hecho).
-1. **Núcleo con personalidad** (en curso): la personalidad como estructura explícita
-   (`personality/constitucion.toml`: principios con conductas observables "debe / no
-   debe"; `personality/automodelo_inicial.toml`: la parte mutable), memoria episódica en
-   SQLite con búsqueda, conversación por terminal con Ollama (`luna --model ...`), y
-   comandos para buscar y borrar recuerdos.
-2. **Capa simbólica v0**: grafo de afirmaciones con estado epistémico. El LLM extrae
-   afirmaciones de la conversación, el grafo las guarda y un motor simple de reglas
-   detecta contradicciones y cambios de creencia.
-3. **Temperamento**: cerrar 8–10 escenarios y convertirlos en evaluaciones.
-4. **Espacio de trabajo**: arquitectura de foco limitado y difusión entre módulos. Es
-   ingeniería (gestión del contexto) y también experimento de la línea B.
-5. **Abstracción**: aprender conceptos o programas a partir de ejemplos (síntesis de
-   programas, biblioteca de abstracciones reutilizables) y evaluarla en tareas tipo ARC.
-6. **Reflexión y evolución** del automodelo, con historial versionado.
-7. **Proactividad, laboratorio y permisos.** Adelantado en parte (2026-11-05): v1 de
-   intereses propios y sesiones autónomas (`luna-explora`), ver
-   `docs/investigacion/intereses.md`. Faltan herramientas (web, Python) y permisos.
-8. **Voz**. 9. **Cuerpo** (exploración futura).
+1. **Núcleo con personalidad** (hecho): constitución estructurada, automodelo, memoria
+   episódica en SQLite y conversación por terminal.
+2. **Creencias simbólicas** (v1): grafo de creencias en forma de tripletas (quién
+   cree, sujeto, relación, objeto, polaridad) con nivel epistémico y fuente. Reglas
+   simbólicas que detectan contradicciones y cambios de creencia. Las extrae la
+   reflexión (fase 6).
+3. **Temperamento** (v1): escenarios E01–E08 como datos, evaluación con un "crítico"
+   que comprueba las conductas "debe / nunca" de la constitución, y uso opcional del
+   crítico en vivo (`luna --critico`). Experimento E4: con crítico frente a sin crítico.
+4. **Espacio de trabajo global** (v1): los módulos (memoria, creencias, intereses,
+   propuestas) compiten por un foco de capacidad limitada; solo lo seleccionado llega
+   al modelo. Se registra qué hubo en el foco (`/foco`), y la capacidad es un
+   parámetro para hacer ablaciones.
+5. **Abstracción** (v1): intervenciones I2 (búsqueda de hipótesis, condición C3) e I3
+   (biblioteca de abstracciones entre tareas, condición C4) en E1.
+6. **Reflexión y evolución** (v1): `luna-reflexiona` resume las conversaciones, extrae
+   creencias y propone como máximo 3 cambios al automodelo, cada uno con su motivo. Los
+   cambios quedan versionados y se pueden revertir. La constitución no se toca.
+7. **Laboratorio, herramientas y permisos** (v1): política de permisos en código con 4
+   niveles, registro de todas las acciones y cola de propuestas para lo que requiere
+   aprobación. Herramientas: Wikipedia y arXiv (solo lectura) y Python para
+   simulaciones (requiere aprobación por defecto). Se integran en las sesiones
+   autónomas.
+8. **Voz** (pendiente): requiere elegir STT/TTS locales y probar en el hardware de Usx.
+9. **Cuerpo** (exploración futura).
 
 ## Decisiones de diseño
 
@@ -146,6 +155,13 @@ Principios:
   el presupuesto. Cada interés registra su origen (`semilla` / `propio` / `usx`) para
   medir si es un espejo de Usx. Sin internet ni acciones externas hasta que exista el
   sistema de permisos. Es también la línea de investigación D (experimento E5).
+- **2026-11-05 (pedido por Usx: avanzar todas las fases posibles)**: Se implementan las
+  versiones 1 de las fases 2 a 7. Voz y cuerpo quedan pendientes porque dependen de
+  hardware y de decisiones de Usx que no se pueden probar desde aquí.
+- **2026-11-05**: Las herramientas que ejecutan código nunca son autónomas por defecto:
+  la ejecución de Python requiere aprobación salvo que Usx la autorice en
+  `~/.luna/permisos.toml`. Motivo: el ejecutor aísla fallos y bucles infinitos, pero no
+  es un sandbox de seguridad.
 
 ## Preguntas abiertas
 

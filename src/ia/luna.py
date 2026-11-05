@@ -9,6 +9,7 @@ from ia.llm import LanguageModel, Message
 from ia.memory import Episode, Memory
 from ia.notebook import Notebook
 from ia.persona import Constitution, SelfModel, render_system_prompt
+from ia.tools import Toolbox
 
 SPEAKER = {"user": "Usx", "assistant": "Luna"}
 
@@ -29,6 +30,7 @@ class Luna:
     recall_k: int = 5
     agenda: Agenda | None = None
     notebook: Notebook | None = None
+    toolbox: Toolbox | None = None
 
     def __post_init__(self):
         self.session = self.session or uuid.uuid4().hex[:12]
@@ -68,14 +70,19 @@ class Luna:
         if not self.notebook:
             return None
         pending = self.notebook.pending()[-3:]
-        if not pending:
+        proposals = self.toolbox.proposals.pending() if self.toolbox else []
+        if not pending and not proposals:
             return None
         items = "\n".join(
             f"- [{e['tipo']}] {e['topic']}: "
             + (e.get("hallazgo") or f"{e.get('titulo', '')} — {e.get('texto', '')}")
             + (f" (nivel: {e['nivel']})" if e.get("nivel") else "")
+            + (f" [simulación: {e['interpretacion']}]" if e.get("interpretacion") else "")
             for e in pending
         )
+        if proposals:
+            items += "\nPropuestas que esperan su aprobación (dile el id y por qué):\n" + "\n".join(
+                f"- #{p['id']} {p['tool']}: {p['reason']}" for p in proposals[-3:])
         messages = self.build_messages("")[:-1]
         messages.append({"role": "user", "content": (
             "[Nota interna, no es un mensaje de Usx: Usx acaba de abrir la conversación. "

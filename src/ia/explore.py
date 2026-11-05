@@ -14,7 +14,9 @@ from datetime import datetime
 from ia.agenda import Agenda, Interest, normalize
 from ia.llm import LanguageModel
 from ia.notebook import Notebook
+from ia.permissions import ALLOW, PROPOSE
 from ia.persona import Constitution, SelfModel
+from ia.tools import Toolbox
 
 P_WRITE = 0.2  # share of sessions spent on her hobby (writing) instead of research
 
@@ -25,6 +27,8 @@ interesa: «{topic}».
 Preguntas abiertas que tenías: {questions}
 Lo que ya encontraste antes sobre este tema:
 {previous}
+Fuentes que consultaste ahora (pueden ser incompletas; cítalas si las usas):
+{sources}
 
 Trabaja con tu laboratorio mental de cinco niveles. No tienes internet: razonas con lo
 que sabes, así que marca honestamente qué es conocimiento establecido y qué es hipótesis
@@ -37,12 +41,35 @@ Responde SOLO con un objeto JSON con estas claves:
 "supuestos_ocultos": qué podríamos estar pasando por alto,
 "como_distinguir": lista de observaciones o predicciones que separarían las hipótesis,
 "experimento_posible": una prueba, simulación u observación concreta (o null),
+"simulacion_python": si una simulación pequeña ayudaría a distinguir hipótesis, un
+   script de Python autocontenido (solo biblioteca estándar) que imprima sus
+   resultados; si no, null,
 "hallazgo": un párrafo con lo más interesante que concluyes,
 "nivel": "sabemos" | "podria_ser" | "especulo",
 "nuevas_preguntas": lista de 1 a 3 preguntas nuevas,
 "nuevo_interes": un tema relacionado pero distinto que te gustaría explorar después, o null,
 "contarle_a_usx": true o false (solo si de verdad vale la pena),
 "por_que": por qué se lo contarías (o null)
+"""
+
+SOURCES_PROMPT = """{identity}
+
+Vas a investigar por tu cuenta el tema «{topic}». Preguntas abiertas: {questions}
+Puedes consultar fuentes antes de pensar. Responde SOLO con JSON:
+{{"wikipedia": "búsqueda en español o null", "arxiv": "search query in English or null"}}
+"""
+
+INTERPRET_PROMPT = """{identity}
+
+Investigabas: {question}
+Escribiste esta simulación:
+{code}
+Y produjo esta salida:
+{output}
+
+¿Qué concluyes? ¿Qué falló, si algo falló: la hipótesis, el modelo o el código? Recuerda
+que una simulación muestra que un mecanismo es posible bajo sus supuestos, no que
+ocurra en la naturaleza. Máximo 120 palabras.
 """
 
 WRITING_PROMPT = """{identity}
@@ -96,13 +123,33 @@ def _as_list(value) -> list[str]:
     return [str(value)] if value else []
 
 
+def consult_sources(llm: LanguageModel, identity: str, interest: Interest,
+                    toolbox: Toolbox | None) -> tuple[str, list[dict]]:
+    """Let her look things up first, within her permissions."""
+    if toolbox is None:
+        return "(sin herramientas)", []
+    plan = parse_json_object(llm.generate(SOURCES_PROMPT.format(
+        identity=identity, topic=interest.topic,
+        questions="; ".join(interest.questions[-3:]) or "(ninguna)"), format="json")) or {}
+    texts, used = [], []
+    for tool in ("wikipedia", "arxiv"):
+        query = plan.get(tool)
+        if not query or not isinstance(query, str):
+            continue
+        out = toolbox.request(tool, {"query": query}, f"investigar «{interest.topic}»")
+        used.append({"tool": tool, "query": query, "decision": out.decision})
+        if out.decision == ALLOW and out.result:
+            texts.append(out.result[:2500])
+    return ("\n\n".join(texts) or "(ninguna)"), used
+
+
 def research(llm: LanguageModel, identity: str, interest: Interest,
-             previous: list[dict]) -> tuple[dict | None, str]:
+             previous: list[dict], sources: str = "(sin herramientas)") -> tuple[dict | None, str]:
     prev_text = "\n".join(f"- {e['hallazgo']}" for e in previous[-3:]) or "(nada todavía)"
     prompt = RESEARCH_PROMPT.format(
         identity=identity, topic=interest.topic,
         questions="; ".join(interest.questions[-3:]) or "(ninguna todavía)",
-        previous=prev_text,
+        previous=prev_text, sources=sources,
     )
     raw = llm.generate(prompt, format="json")
     return parse_json_object(raw), raw
@@ -111,7 +158,8 @@ def research(llm: LanguageModel, identity: str, interest: Interest,
 def explore_once(llm: LanguageModel, agenda: Agenda, notebook: Notebook,
                  constitution: Constitution, self_model: SelfModel,
                  rng: random.Random, now: datetime | None = None,
-                 policy: str = "progreso", p_write: float = P_WRITE) -> dict | None:
+                 policy: str = "progreso", p_write: float = P_WRITE,
+                 toolbox: Toolbox | None = None) -> dict | None:
     now = now or datetime.now()
     interest = agenda.choose(rng, now, policy)
     if interest is None:
@@ -129,7 +177,8 @@ def explore_once(llm: LanguageModel, agenda: Agenda, notebook: Notebook,
         return entry
 
     previous = [e for e in notebook.entries(interest.id) if e.get("tipo") == "investigacion"]
-    data, raw = research(llm, identity, interest, previous)
+    sources, used = consult_sources(llm, identity, interest, toolbox)
+    data, raw = research(llm, identity, interest, previous, sources)
     if data is None or not data.get("hallazgo"):
         entry = notebook.add({**base, "tipo": "fallido", "raw": raw[:2000], "share": False}, now)
         agenda.save()
@@ -148,6 +197,20 @@ def explore_once(llm: LanguageModel, agenda: Agenda, notebook: Notebook,
         spawned = child.topic if child else None
     agenda.save()
 
+    lab: dict = {}
+    code = data.get("simulacion_python")
+    if code and isinstance(code, str) and toolbox is not None:
+        question = str(data.get("pregunta") or interest.topic)
+        out = toolbox.request("python", {"code": code}, f"simulación: {question}")
+        lab = {"simulacion": code}
+        if out.decision == ALLOW:
+            lab["resultado_simulacion"] = out.result
+            lab["interpretacion"] = llm.generate(INTERPRET_PROMPT.format(
+                identity=identity, question=question, code=code,
+                output=(out.result or "")[:2000])).strip()
+        elif out.decision == PROPOSE:
+            lab["propuesta"] = out.proposal_id
+
     return notebook.add({
         **base, "tipo": "investigacion",
         "pregunta": str(data.get("pregunta") or ""),
@@ -161,5 +224,6 @@ def explore_once(llm: LanguageModel, agenda: Agenda, notebook: Notebook,
         "nuevas_preguntas": new_questions,
         "nuevo_interes": spawned,
         "progreso": round(progress, 3), "novedad": round(nov, 3),
-        "share": bool(data.get("contarle_a_usx")), "por_que": data.get("por_que"),
+        "share": bool(data.get("contarle_a_usx")) or "propuesta" in lab,
+        "por_que": data.get("por_que"), "fuentes": used, **lab,
     }, now)

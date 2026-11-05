@@ -19,7 +19,9 @@ from ia.llm import OllamaLLM
 from ia.luna import SPEAKER, Luna
 from ia.memory import Memory
 from ia.notebook import Notebook
+from ia.permissions import JsonlStore, Policy, Proposals
 from ia.persona import SelfModel, load_constitution
+from ia.tools import Toolbox, default_tools
 
 HELP = """Comandos:
   /buscar <texto>   busca en sus recuerdos (muestra el id)
@@ -27,6 +29,10 @@ HELP = """Comandos:
   /intereses        sus intereses (activos y dormidos) y su progreso
   /cuaderno         lo último que investigó o escribió por su cuenta
   /sugerir <tema>   le sugieres un tema (queda marcado como origen 'usx')
+  /propuestas       acciones que esperan tu aprobación
+  /aprobar <id>     aprueba y ejecuta una propuesta (nivel 3: /aprobar <id> CONFIRMO)
+  /rechazar <id>    rechaza una propuesta
+  /acciones         últimas acciones registradas (auditoría)
   /prompt           muestra el prompt de sistema actual (para investigar)
   /salir            termina"""
 
@@ -38,6 +44,11 @@ def data_home() -> Path:
 def load_life(home: Path, self_model: SelfModel) -> tuple[Agenda, Notebook]:
     agenda = Agenda.load(home / "intereses.json", seeds=self_model.interests)
     return agenda, Notebook(home / "cuaderno.jsonl")
+
+
+def load_toolbox(home: Path) -> Toolbox:
+    return Toolbox(Policy.load(home / "permisos.toml"), default_tools(),
+                   JsonlStore(home / "acciones.jsonl"), Proposals(home / "propuestas.jsonl"))
 
 
 def show_interests(agenda: Agenda) -> None:
@@ -75,7 +86,7 @@ def main() -> None:
         constitution=load_constitution(),
         self_model=self_model,
         memory=Memory(home / "memoria.sqlite"),
-        agenda=agenda, notebook=notebook,
+        agenda=agenda, notebook=notebook, toolbox=load_toolbox(home),
     )
     print(f"Luna ({args.model}) · {luna.memory.count()} recuerdos · /ayuda para comandos\n")
     try:
@@ -113,6 +124,20 @@ def main() -> None:
                 agenda.save()
             print("  Anotado en sus intereses." if added
                   else "  Ya lo tiene, o tiene demasiados intereses activos.")
+        elif text == "/propuestas":
+            for p in luna.toolbox.proposals.pending():
+                print(f"  #{p['id']} [nivel {p['level']}] {p['tool']}: {p['reason']}")
+                if p["tool"] == "python":
+                    print("    " + p["args"]["code"].replace("\n", "\n    "))
+        elif text.startswith("/aprobar "):
+            parts = text.split()
+            result = luna.toolbox.approve(parts[1], parts[2] if len(parts) > 2 else "")
+            print("  " + result.replace("\n", "\n  "))
+        elif text.startswith("/rechazar "):
+            print("  Rechazada." if luna.toolbox.reject(text.split()[1]) else "  No existe.")
+        elif text == "/acciones":
+            for a in luna.toolbox.log.all()[-10:]:
+                print(f"  {a['ts'][:16]} {a['tool']} → {a['decision']}  ({a.get('reason', '')})")
         elif text == "/prompt":
             print(luna.build_messages("")[0]["content"])
         else:
@@ -153,7 +178,7 @@ def explore_main() -> None:
             print(f"Presupuesto diario agotado ({args.max_por_dia}).")
             break
         entry = explore_once(llm, agenda, notebook, constitution, self_model, rng,
-                             policy=args.seleccion)
+                             policy=args.seleccion, toolbox=load_toolbox(home))
         if entry is None:
             print("No tiene intereses activos.")
             break
@@ -161,6 +186,12 @@ def explore_main() -> None:
             print(f"[{entry['topic']}] {entry['pregunta']}\n  → {entry['hallazgo']}\n"
                   f"  progreso {entry['progreso']:.2f}"
                   + (f" · nuevo interés: {entry['nuevo_interes']}" if entry["nuevo_interes"] else ""))
+            for f in entry.get("fuentes", []):
+                print(f"  fuente: {f['tool']} «{f['query']}» ({f['decision']})")
+            if entry.get("propuesta"):
+                print(f"  propuso una simulación (#{entry['propuesta']}); apruébala en el chat")
+            if entry.get("interpretacion"):
+                print(f"  simulación: {entry['interpretacion']}")
         elif entry["tipo"] == "escrito":
             print(f"[{entry['topic']}] escribió: {entry['titulo']}")
         else:

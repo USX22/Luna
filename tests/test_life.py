@@ -142,3 +142,51 @@ def test_luna_opens_conversation_with_pending_findings_once(tmp_path):
     assert "melatonina" in llm.chats[0][-1]["content"]
     assert "ritmos circadianos" in llm.chats[0][0]["content"]  # her interests in context
     assert nb.pending() == [] and luna.opening() is None
+
+
+# --- tools inside autonomous research --------------------------------------
+
+def _research_llm(code):
+    def respond(prompt):
+        if "Puedes consultar fuentes" in prompt:
+            return '{"wikipedia": "ritmo circadiano", "arxiv": null}'
+        if "Y produjo esta salida" in prompt:
+            return "El periodo se mantiene: compatible con compensación."
+        data = json.loads(_finding("La compensación térmica es plausible"))
+        data["simulacion_python"] = code
+        return json.dumps(data)
+    return FakeLLM(respond)
+
+
+def _toolbox(tmp_path, granted):
+    from ia.permissions import JsonlStore, Policy, Proposals
+    from ia.tools import Tool, Toolbox, python_run
+    tools = {"wikipedia": Tool("wikipedia", 1, "", lambda a: f"WIKI:{a['query']}"),
+             "python": Tool("python", 2, "", python_run)}
+    return Toolbox(Policy(set(granted)), tools, JsonlStore(tmp_path / "a.jsonl"),
+                   Proposals(tmp_path / "p.jsonl"))
+
+
+def test_research_uses_sources_and_runs_granted_simulation(tmp_path):
+    agenda, nb = _life(tmp_path)
+    llm = _research_llm("print(24.1)")
+    tb = _toolbox(tmp_path, {"wikipedia", "python"})
+    e = explore_once(llm, agenda, nb, load_constitution(), SelfModel(), random.Random(0),
+                     NOW, p_write=0.0, toolbox=tb)
+    assert "WIKI:ritmo circadiano" in llm.prompts[1]
+    assert e["fuentes"][0]["decision"] == "permitir"
+    assert e["resultado_simulacion"].strip() == "24.1"
+    assert e["interpretacion"].startswith("El periodo")
+
+
+def test_simulation_without_permission_becomes_proposal_and_she_mentions_it(tmp_path):
+    agenda, nb = _life(tmp_path)
+    tb = _toolbox(tmp_path, {"wikipedia"})
+    e = explore_once(_research_llm("print(1)"), agenda, nb, load_constitution(), SelfModel(),
+                     random.Random(0), NOW, p_write=0.0, toolbox=tb)
+    assert "resultado_simulacion" not in e and tb.proposals.pending()[0]["id"] == e["propuesta"]
+    llm = FakeLLM(lambda t: "¿Me dejas correr una simulación?")
+    luna = Luna(llm, load_constitution(), SelfModel(), Memory(":memory:"),
+                agenda=agenda, notebook=nb, toolbox=tb)
+    luna.opening()
+    assert f"#{e['propuesta']}" in llm.chats[0][-1]["content"]
