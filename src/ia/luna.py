@@ -5,11 +5,13 @@ import uuid
 from dataclasses import dataclass
 
 from ia.agenda import Agenda
+from ia.beliefs import BeliefStore
 from ia.llm import LanguageModel, Message
 from ia.memory import Episode, Memory
 from ia.notebook import Notebook
 from ia.persona import Constitution, SelfModel, render_system_prompt
 from ia.tools import Toolbox
+from ia.workspace import Content, Workspace, make
 
 SPEAKER = {"user": "Usx", "assistant": "Luna"}
 
@@ -31,39 +33,56 @@ class Luna:
     agenda: Agenda | None = None
     notebook: Notebook | None = None
     toolbox: Toolbox | None = None
+    beliefs: BeliefStore | None = None
+    workspace: Workspace | None = None
 
     def __post_init__(self):
         self.session = self.session or uuid.uuid4().hex[:12]
+        self.workspace = self.workspace or Workspace()
 
     def recall(self, text: str) -> list[Episode]:
         """Relevant episodes from previous sessions."""
         return self.memory.search(text, k=self.recall_k, exclude_session=self.session)
 
+    def candidates(self, cue: str) -> list[Content]:
+        """What each module proposes for the focus, given the current cue."""
+        out: list[Content] = []
+        for rank, e in enumerate(self.recall(cue)):
+            module = "resumen" if e.role == "resumen" else "memoria"
+            who = "" if module == "resumen" else f"{SPEAKER.get(e.role, e.role)}: "
+            out.append(make(module, f"[{e.ts[:10]}] {who}{e.content}", cue, 0.1 / (rank + 1)))
+        if self.beliefs:
+            for b in self.beliefs.about(cue):
+                who = "Usx cree" if b.holder == "usx" else "Tú crees"
+                out.append(make("creencia", f"{who}: {b.describe()} ({b.level}, {b.ts[:10]})", cue))
+            for old, new, ts in self.beliefs.changes("usx")[:3]:
+                out.append(make("cambio", f"Usx antes creía «{old.describe()}» y desde {ts[:10]} "
+                                          f"cree «{new.describe()}»", cue))
+            for u, l in self.beliefs.disagreements()[:3]:
+                out.append(make("desacuerdo", f"Usx: «{u.describe()}»; tú: «{l.describe()}»", cue))
+        if self.agenda:
+            for i in self.agenda.active():
+                q = f" (pregunta abierta: {i.questions[-1]})" if i.questions else ""
+                out.append(make("interes", f"{i.topic}, origen {i.origin}{q}", cue,
+                                0.1 * i.learning_progress()))
+        return out
+
     def build_messages(self, user_text: str) -> list[Message]:
         system = render_system_prompt(self.constitution, self.self_model)
         system += "\n\n# Memoria\n" + MEMORY_RULES
-        recalled = self.recall(user_text)
-        if recalled:
-            system += "\nRecuerdos relevantes de conversaciones anteriores:\n" + "\n".join(
-                f"- [{e.ts[:10]}] {SPEAKER.get(e.role, e.role)}: {e.content}" for e in recalled
-            )
-        system += self._own_life()
+        focus = self.workspace.compete(self.candidates(user_text))
+        if focus:
+            system += ("\n\n# Tu foco ahora (lo que viene a tu mente; úsalo solo si es "
+                       "pertinente)\n" + "\n".join(c.render() for c in focus))
+            if any(c.module == "interes" for c in focus):
+                system += ("\nTus intereses son tuyos, no un espejo de los de Usx; "
+                           "menciónalos cuando venga a cuento.")
         messages: list[Message] = [{"role": "system", "content": system}]
         messages += [{"role": e.role, "content": e.content}
-                     for e in self.memory.recent(self.session, self.recent_turns)]
+                     for e in self.memory.recent(self.session, self.recent_turns)
+                     if e.role in ("user", "assistant")]
         messages.append({"role": "user", "content": user_text})
         return messages
-
-    def _own_life(self) -> str:
-        """Her current interests and open questions, so they shape the conversation."""
-        if not self.agenda or not self.agenda.active():
-            return ""
-        lines = ["\n\n# Tu vida propia (intereses que exploras por tu cuenta)"]
-        for i in self.agenda.active():
-            q = f" Preguntas abiertas: {'; '.join(i.questions[-2:])}" if i.questions else ""
-            lines.append(f"- {i.topic} (origen: {i.origin}).{q}")
-        lines.append("Puedes mencionarlos cuando venga a cuento; no son un espejo de los de Usx.")
-        return "\n".join(lines)
 
     def opening(self) -> str | None:
         """If she has findings worth sharing, she speaks first."""

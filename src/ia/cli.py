@@ -8,12 +8,15 @@ into the repository.
 from __future__ import annotations
 
 import argparse
+import json
 import os
+from dataclasses import asdict
 import random
 from datetime import datetime
 from pathlib import Path
 
 from ia.agenda import Agenda
+from ia.beliefs import BeliefStore
 from ia.explore import explore_once
 from ia.llm import OllamaLLM
 from ia.luna import SPEAKER, Luna
@@ -21,7 +24,9 @@ from ia.memory import Memory
 from ia.notebook import Notebook
 from ia.permissions import JsonlStore, Policy, Proposals
 from ia.persona import SelfModel, load_constitution
+from ia.reflection import Reflector, SelfModelHistory
 from ia.tools import Toolbox, default_tools
+from ia.workspace import Workspace
 
 HELP = """Comandos:
   /buscar <texto>   busca en sus recuerdos (muestra el id)
@@ -33,6 +38,10 @@ HELP = """Comandos:
   /aprobar <id>     aprueba y ejecuta una propuesta (nivel 3: /aprobar <id> CONFIRMO)
   /rechazar <id>    rechaza una propuesta
   /acciones         últimas acciones registradas (auditoría)
+  /creencias [tema] creencias vigentes (tuyas y suyas), o las relacionadas con un tema
+  /cambios          cambios de creencia detectados y desacuerdos entre ustedes
+  /automodelo       su automodelo actual y su historial de versiones
+  /foco             qué entró en su foco en la última respuesta (y qué quedó fuera)
   /prompt           muestra el prompt de sistema actual (para investigar)
   /salir            termina"""
 
@@ -76,6 +85,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Conversar con Luna")
     ap.add_argument("--model", default="qwen3.5:9b", help="modelo de Ollama")
     ap.add_argument("--temperature", type=float, default=0.7)
+    ap.add_argument("--foco", type=int, default=8,
+                    help="capacidad del espacio de trabajo (0 = sin límite, ablación)")
     args = ap.parse_args()
 
     home = data_home()
@@ -87,6 +98,8 @@ def main() -> None:
         self_model=self_model,
         memory=Memory(home / "memoria.sqlite"),
         agenda=agenda, notebook=notebook, toolbox=load_toolbox(home),
+        beliefs=BeliefStore(home / "creencias.sqlite"),
+        workspace=Workspace(capacity=args.foco or None),
     )
     print(f"Luna ({args.model}) · {luna.memory.count()} recuerdos · /ayuda para comandos\n")
     try:
@@ -138,6 +151,27 @@ def main() -> None:
         elif text == "/acciones":
             for a in luna.toolbox.log.all()[-10:]:
                 print(f"  {a['ts'][:16]} {a['tool']} → {a['decision']}  ({a.get('reason', '')})")
+        elif text == "/creencias" or text.startswith("/creencias "):
+            items = (luna.beliefs.about(text[11:], k=15) if text.startswith("/creencias ")
+                     else luna.beliefs.current()[:15])
+            for b in items:
+                print(f"  [{b.holder}] {b.describe()} · {b.level} · {b.ts[:10]}")
+        elif text == "/cambios":
+            for old, new, ts in luna.beliefs.changes()[:10]:
+                print(f"  {ts[:10]} [{new.holder}] antes: {old.describe()} → ahora: {new.describe()}")
+            for u, l in luna.beliefs.disagreements()[:10]:
+                print(f"  desacuerdo: Usx «{u.describe()}» / Luna «{l.describe()}»")
+        elif text == "/automodelo":
+            print(json.dumps(asdict(luna.self_model), ensure_ascii=False, indent=2))
+            for v in SelfModelHistory(home / "automodelo_historial.jsonl").versions()[-5:]:
+                desc = "; ".join(f"{c['accion']} {c['campo']}: {c['valor']} ({c['motivo']})"
+                                 for c in v["changes"]) or v["note"]
+                print(f"  v{v['version']} {v['ts'][:16]} {desc}")
+        elif text == "/foco":
+            for c in luna.workspace.last_selected:
+                print(f"  ✓ {c.salience:.2f} {c.render()[2:][:150]}")
+            for c in luna.workspace.last_rejected[:5]:
+                print(f"  · {c.salience:.2f} {c.render()[2:][:150]}")
         elif text == "/prompt":
             print(luna.build_messages("")[0]["content"])
         else:
@@ -196,6 +230,45 @@ def explore_main() -> None:
             print(f"[{entry['topic']}] escribió: {entry['titulo']}")
         else:
             print(f"[{entry['topic']}] sesión fallida (el modelo no devolvió JSON válido)")
+
+
+def reflect_main() -> None:
+    """Reflection: summarise conversations, extract beliefs, evolve the self-model."""
+    ap = argparse.ArgumentParser(description="Luna reflexiona sobre sus conversaciones")
+    ap.add_argument("--model", default="qwen3.5:9b")
+    ap.add_argument("--historial", action="store_true", help="muestra las versiones del automodelo")
+    ap.add_argument("--revertir", type=int, metavar="N", help="vuelve a la versión N")
+    args = ap.parse_args()
+
+    home = data_home()
+    self_model = SelfModel.load(home / "automodelo.json")
+    agenda, _ = load_life(home, self_model)
+    reflector = Reflector(OllamaLLM(args.model, temperature=0.3), load_constitution(),
+                          self_model, Memory(home / "memoria.sqlite"),
+                          BeliefStore(home / "creencias.sqlite"), home, agenda)
+    if args.historial:
+        for v in reflector.history.versions():
+            print(f"v{v['version']} {v['ts'][:16]} {v['note']}")
+            for c in v["changes"]:
+                print(f"   {c['accion']} {c['campo']}: {c['valor']}  — {c['motivo']}")
+        return
+    if args.revertir:
+        print("Revertido." if reflector.revert(args.revertir) else "No existe esa versión.")
+        return
+    reports = reflector.reflect()
+    if not reports:
+        print("No hay conversaciones nuevas sobre las que reflexionar.")
+    for r in reports:
+        print(f"Sesión {r['session']}")
+        if r.get("error"):
+            print(f"  {r['error']}")
+            continue
+        if r.get("summary"):
+            print(f"  Resumen: {r['summary']}")
+        for event, holder, desc in r["beliefs"]:
+            print(f"  creencia ({event}) [{holder}] {desc}")
+        for c in r["changes"]:
+            print(f"  automodelo: {c['accion']} {c['campo']} «{c['valor']}» — {c['motivo']}")
 
 
 if __name__ == "__main__":
