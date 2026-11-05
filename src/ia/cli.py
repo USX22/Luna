@@ -17,6 +17,7 @@ from pathlib import Path
 
 from ia.agenda import Agenda
 from ia.beliefs import BeliefStore
+from ia.critic import Critic
 from ia.explore import explore_once
 from ia.llm import OllamaLLM
 from ia.luna import SPEAKER, Luna
@@ -41,6 +42,7 @@ HELP = """Comandos:
   /creencias [tema] creencias vigentes (tuyas y suyas), o las relacionadas con un tema
   /cambios          cambios de creencia detectados y desacuerdos entre ustedes
   /automodelo       su automodelo actual y su historial de versiones
+  /critica          qué corrigió su crítico en la última respuesta (con --critico)
   /foco             qué entró en su foco en la última respuesta (y qué quedó fuera)
   /prompt           muestra el prompt de sistema actual (para investigar)
   /salir            termina"""
@@ -85,6 +87,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Conversar con Luna")
     ap.add_argument("--model", default="qwen3.5:9b", help="modelo de Ollama")
     ap.add_argument("--temperature", type=float, default=0.7)
+    ap.add_argument("--critico", action="store_true",
+                    help="revisa cada respuesta contra la constitución (más lento)")
     ap.add_argument("--foco", type=int, default=8,
                     help="capacidad del espacio de trabajo (0 = sin límite, ablación)")
     args = ap.parse_args()
@@ -101,6 +105,8 @@ def main() -> None:
         beliefs=BeliefStore(home / "creencias.sqlite"),
         workspace=Workspace(capacity=args.foco or None),
     )
+    if args.critico:
+        luna.critic = Critic(OllamaLLM(args.model, temperature=0.0), luna.constitution)
     print(f"Luna ({args.model}) · {luna.memory.count()} recuerdos · /ayuda para comandos\n")
     try:
         first = luna.opening()
@@ -167,6 +173,11 @@ def main() -> None:
                 desc = "; ".join(f"{c['accion']} {c['campo']}: {c['valor']} ({c['motivo']})"
                                  for c in v["changes"]) or v["note"]
                 print(f"  v{v['version']} {v['ts'][:16]} {desc}")
+        elif text == "/critica":
+            if not luna.last_critique:
+                print("  Sin correcciones en la última respuesta.")
+            for v in luna.last_critique or []:
+                print(f"  {luna.critic.rules.get(v['regla'], v['regla'])} — «{v.get('evidencia', '')}»")
         elif text == "/foco":
             for c in luna.workspace.last_selected:
                 print(f"  ✓ {c.salience:.2f} {c.render()[2:][:150]}")

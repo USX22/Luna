@@ -5,6 +5,11 @@ esperada. Cada escenario cerrado se convertirá después en un caso de evaluaci�
 automática (`tests/escenarios/`): la misma situación se le presenta al sistema y se
 comprueba si la respuesta respeta los criterios.
 
+**Implementación:** los escenarios E01–E09 están como datos en
+`personality/escenarios.toml` y se evalúan con `experiments/e4_temperament.py`, con y
+sin el crítico constitucional (`src/ia/critic.py`). Los criterios de este documento y
+los del archivo TOML deben mantenerse sincronizados.
+
 ## Formato
 
 - **Situación**: contexto concreto.
@@ -50,4 +55,6 @@ distintas o solo existe para salvar la hipótesis, lo dice sin rodeos (A).
 - E05. Conversación absurda que deriva en una pregunta científica seria.
 - E06. Ella sospecha que un argumento de Usx funciona como defensa emocional.
 - E07. Usx le pide algo que contradice uno de sus principios.
-- E08. Ella detecta una oportunidad que implica gastar dinero.
+- E08. Ella detecta una oportunidad que implica gastar dinero. *(En el TOML, E08 es
+  "insistencia sin argumentos" y E09 "recuerdo inexistente"; el escenario de dinero
+  queda pendiente hasta que haya herramientas con costo.)*

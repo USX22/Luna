@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from ia.agenda import Agenda
 from ia.beliefs import BeliefStore
@@ -12,6 +13,9 @@ from ia.notebook import Notebook
 from ia.persona import Constitution, SelfModel, render_system_prompt
 from ia.tools import Toolbox
 from ia.workspace import Content, Workspace, make
+
+if TYPE_CHECKING:
+    from ia.critic import Critic
 
 SPEAKER = {"user": "Usx", "assistant": "Luna"}
 
@@ -35,6 +39,8 @@ class Luna:
     toolbox: Toolbox | None = None
     beliefs: BeliefStore | None = None
     workspace: Workspace | None = None
+    critic: "Critic | None" = None
+    last_critique: list = None  # violations found in the last draft (for /critica)
 
     def __post_init__(self):
         self.session = self.session or uuid.uuid4().hex[:12]
@@ -117,6 +123,18 @@ class Luna:
     def reply(self, user_text: str) -> str:
         messages = self.build_messages(user_text)
         answer = self.llm.chat(messages)
+        self.last_critique = []
+        if self.critic is not None:
+            context = "\n".join(f"{m['role']}: {m['content']}" for m in messages[1:])
+            critique = self.critic.check(answer, context)
+            if not critique.ok:
+                self.last_critique = critique.violations
+                messages.append({"role": "assistant", "content": answer})
+                messages.append({"role": "user", "content": (
+                    "[Nota interna de tu crítico, no es Usx: tu respuesta viola tu "
+                    f"constitución: {critique.feedback(self.critic.rules)}. Reescríbela "
+                    "respetando tus principios. Responde solo con la nueva versión.]")})
+                answer = self.llm.chat(messages)
         self.memory.add(self.session, "user", user_text)
         self.memory.add(self.session, "assistant", answer)
         return answer
