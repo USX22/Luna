@@ -112,6 +112,48 @@ irrelevante), `--tipo estructurado`.
   será la primera explicación a examinar (con una ablación del peso de la
   regularización), no un motivo para cambiar la hipótesis.
 
+### Resultados de E6 y E6b (CPU, 3 semillas, 3000 pasos, 2026-11-05)
+
+Media de R² de la sonda en secuencias nuevas · R² fuera de distribución · correlación de
+la K recuperada (solo en las secuencias identificables).
+
+| σ | Modelo | E6 (ruido blanco) | E6b (estructurado) |
+|---|---|---|---|
+| 0 | jepa | 0.86 · 0.83 · 0.83 | (igual) |
+| 0 | generativo | 0.95 · 0.84 · 0.75 | |
+| 0 | autoencoder | 0.96 · 0.89 · 0.85 | |
+| 0 | aleatorio | 0.87 · 0.64 · 0.43 | |
+| 1 | jepa | 0.82 · 0.49 · 0.30 | 0.66 · 0.30 · 0.05 |
+| 1 | generativo | **0.95** · 0.81 · 0.73 | 0.74 · 0.39 · 0.08 |
+| 1 | autoencoder | 0.65 · 0.36 · 0.10 | **0.80** · 0.54 · 0.42 |
+| 3 | jepa | 0.64 · 0.35 · −0.05 | 0.61 · 0.34 · 0.01 |
+| 3 | generativo | **0.75** · 0.34 · 0.16 | **0.68** · 0.35 · 0.23 |
+| 3 | autoencoder | 0.40 · 0.20 · −0.03 | 0.67 · 0.33 · 0.02 |
+
+**Veredicto sobre las hipótesis registradas:** H1, H2, H2b y H3 **no se cumplen**. En
+este mundo, predecir en el espacio latente no da mejores abstracciones que predecir
+observaciones.
+
+**Exploración posterior (no confirmatoria, 1 semilla):** con menos regularización de
+varianza (peso 0.01), JEPA alcanza al generativo sin distractores (0.95), pero sigue sin
+ventaja con el distractor estructurado (unos 0.63 frente a 0.68). El riesgo registrado
+explica parte del déficit sin distractores, pero no la falta de ventaja con ellos.
+
+**Interpretación:** el mundo es de baja dimensión (8 de 32 canales irrelevantes), y
+predecir las observaciones es barato para un MLP. Las ventajas publicadas de JEPA
+aparecen en visión, donde el detalle irrelevante domina la señal. Esto **no refuta** la
+tesis, pero la precisa: la ventaja de predecir en el espacio latente no es general,
+depende del régimen.
+
+**E6c (registrado antes de correrlo):** 200 canales distractores estructurados frente a
+24 de señal (`--canales-distractores 200 --tipo estructurado`), con 3 semillas nuevas
+(10, 11, 12) y el peso de regularización por defecto *y* 0.01.
+- **H4.** Cuando el detalle irrelevante predecible domina la observación, `jepa` ≥
+  `generativo` en R² de la sonda.
+- **Refutación:** si el generativo sigue igual o mejor, la ventaja de JEPA no aparece en
+  este tipo de mundos ni siquiera en su régimen favorable, y habría que buscarla en
+  datos de alta dimensión reales (vídeo o señales biomédicas multicanal).
+
 **Limitaciones:** es un mundo de juguete y de baja dimensión. Un resultado positivo
 justifica escalar (señales reales: ECG, EEG o variabilidad cardiaca), no generalizar
 directamente.

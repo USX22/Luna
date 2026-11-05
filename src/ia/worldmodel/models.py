@@ -40,7 +40,8 @@ def var_cov_loss(z: torch.Tensor) -> torch.Tensor:
 
 def train_encoder(kind: str, x: np.ndarray, window: int = 4, horizon: int = 5, z_dim: int = 16,
                   hidden: int = 128, steps: int = 1500, batch: int = 256, lr: float = 1e-3,
-                  seed: int = 0, device: str | None = None) -> tuple[nn.Module, list[float]]:
+                  seed: int = 0, device: str | None = None, reg_weight: float = 1.0,
+                  ema: float = 0.99) -> tuple[nn.Module, list[float]]:
     if kind not in KINDS:
         raise ValueError(kind)
     torch.manual_seed(seed)
@@ -66,7 +67,7 @@ def train_encoder(kind: str, x: np.ndarray, window: int = 4, horizon: int = 5, z
         if kind == "jepa":
             with torch.no_grad():
                 zt = target(Wt[s, t + horizon])
-            loss = ((head(z) - zt) ** 2).mean() + var_cov_loss(z)
+            loss = ((head(z) - zt) ** 2).mean() + reg_weight * var_cov_loss(z)
         elif kind == "generativo":
             frame = Xt[s, t + window - 1 + horizon]   # observation `horizon` steps ahead
             loss = ((head(z) - frame) ** 2).mean()
@@ -78,7 +79,7 @@ def train_encoder(kind: str, x: np.ndarray, window: int = 4, horizon: int = 5, z
         if target is not None:
             with torch.no_grad():
                 for pt, pe in zip(target.parameters(), enc.parameters()):
-                    pt.mul_(0.99).add_(pe, alpha=0.01)
+                    pt.mul_(ema).add_(pe, alpha=1 - ema)
         losses.append(float(loss.detach()))
     return enc.eval(), losses
 

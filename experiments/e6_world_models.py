@@ -21,20 +21,22 @@ from ia.worldmodel.models import KINDS, encode, train_encoder
 
 
 def run(kind: str, sigma: float, seed: int, args) -> dict:
-    kw = {"distractor_std": sigma, "distractor_kind": args.tipo}
+    kw = {"distractor_std": sigma, "distractor_kind": args.tipo,
+          "D": 24 + args.canales_distractores, "n_distractors": args.canales_distractores}
     train = make_world(args.n_train, args.T, seed=1000 + seed, **kw)
     probe = make_world(args.n_probe, args.T, seed=2000 + seed, **kw)
     test = make_world(args.n_probe, args.T, seed=3000 + seed, **kw)
     ood = make_world(args.n_probe, args.T, seed=4000 + seed, K_range=(1.5, 3.0), **kw)
     t0 = time.time()
     enc, losses = train_encoder(kind, train.x, window=args.ventana, horizon=args.horizonte,
-                                steps=args.pasos, seed=seed)
+                                steps=args.pasos, seed=seed, reg_weight=args.jepa_reg,
+                                ema=args.jepa_ema)
     w = args.ventana
     Zp, Zt, Zo = (encode(enc, d.x, w) for d in (probe, test, ood))
     Yp, Yt, Yo = (targets(d.phases)[:, w - 1:] for d in (probe, test, ood))
     r2, pred = ridge_probe(Zp, Yp, Zt, Yt)
     r2_ood, pred_ood = ridge_probe(Zp, Yp, Zo, Yo)
-    return {"modelo": kind, "tipo": args.tipo, "sigma_distractor": sigma, "semilla": seed,
+    return {"modelo": kind, "tipo": args.tipo, "canales_distractores": args.canales_distractores, "jepa_reg": args.jepa_reg, "jepa_ema": args.jepa_ema, "sigma_distractor": sigma, "semilla": seed,
             "r2": round(r2, 4), "r2_ood": round(r2_ood, 4),
             "ley_K_corr": round(recover_K(pred, test.K, test.dt, identifiable(test.phases)), 4),
             "ley_K_corr_ood": round(recover_K(pred_ood, ood.K, ood.dt, identifiable(ood.phases)), 4),
@@ -57,6 +59,10 @@ def main() -> None:
     ap.add_argument("--T", type=int, default=120)
     ap.add_argument("--ventana", type=int, default=4)
     ap.add_argument("--horizonte", type=int, default=5)
+    ap.add_argument("--canales-distractores", type=int, default=8,
+                    help="canales distractores (los de señal son siempre 24)")
+    ap.add_argument("--jepa-reg", type=float, default=1.0, help="peso de la regularización de varianza/covarianza")
+    ap.add_argument("--jepa-ema", type=float, default=0.99, help="tasa EMA del codificador objetivo")
     ap.add_argument("--out", default="results/e6")
     args = ap.parse_args()
 
